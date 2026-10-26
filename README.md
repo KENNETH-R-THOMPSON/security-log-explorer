@@ -1,38 +1,49 @@
 # Security Log Explorer
 
-A Java portfolio and practice project prepared for Kenneth Thompson with AI assistance. Analyze synthetic sign-in logs and flag addresses with repeated failed logins. Java 17+, no external libraries, no network or account credentials.
+A Java 17+ portfolio and practice project prepared for Kenneth Thompson with AI assistance. Analyze synthetic sign-in logs and flag addresses with repeated failed logins. Supports either full-file counts or a configurable rolling time window. No external libraries, network access, or account credentials are required.
 
-## Quick start
+## Setup and run
+
+Install JDK 17 or newer and run these commands from the project folder:
 
 ```sh
-./run.sh
 ./test.sh
+./run.sh
 ./run.sh sample/login-events.csv 4
+./run.sh sample/login-events.csv 3 2
+./run.sh sample/login-events.csv 3 1
 ```
 
-The sample has 6 events: 2 successful, 4 failed. With threshold 3, address `192.0.2.10` is flagged with 3 failures; threshold 4 produces no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
+The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
+
+## How rolling windows work
+
+The analyzer groups failures by address and sorts each address's timestamps. It then finds the highest number of failures in any interval lasting at most the requested number of minutes. Both endpoints are included, so failures exactly two minutes apart count together in a 2-minute window. Input events may be out of timestamp order. Successes don't count as failures or reset earlier failures. The reported alert count is the highest count in one window, not the total across the file. The total, successful, and failed event counts still cover the entire file.
 
 ## IntelliJ IDEA
 
-Open this folder. Choose **Demo - sample login report** in the run menu, then Run. Choose **Tests - all checks** for the test suite. If asked for an SDK, select the installed OpenJDK 25; source language is Java 17. The executable scripts work independently of IntelliJ's build configuration.
+Open this folder. Choose **Demo - sample login report** in the run menu, then Run. Choose **Tests - all checks** for the test suite. If asked for an SDK, select an installed JDK 17 or newer. The executable scripts work independently of IntelliJ's build configuration. To try rolling windows in the IDE, add `3 2` after `sample/login-events.csv` in the Demo program arguments.
 
-Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `LogParser` validates input, `LoginEvent` models an event, and `SecurityAnalyzer` produces immutable report results. Tests use a small explicit-check harness, with no dependency downloads.
+Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `LogParser` validates input, `LoginEvent` models an event, and `SecurityAnalyzer` produces immutable report results. Tests use a small explicit-check harness with no dependency downloads.
 
-## Input and limits
+## Input and limitations
 
-CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. Counts cover the entire file, not a time window; a success does not reset earlier failures. The parser reads the file into memory and is intended for small practice datasets. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic.
+CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The parser loads the whole file into memory, and rolling-window mode sorts failures for each address. Use small practice datasets. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
+
+## Tests and verification
+
+Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 37 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, and CLI behavior. See [VERIFICATION.md](VERIFICATION.md) for the exact local test environment and results. Live security monitoring and real log ingestion have not been tested.
 
 ## Portfolio demonstration
 
-Run the sample, explain the result, change the threshold to 4, then run the tests. Walk through how malformed input is rejected. Explain why a rolling time window would improve detection and why a high failure count alone does not establish malicious activity.
+Run the default sample, explain the result, then run the same sample with 2-minute and 1-minute windows. Show why the alert count changes. Run the tests, describe the inclusive boundary, and explain why repeated failures require investigation before being labeled malicious.
 
-## Next features to implement yourself
+## Future improvements
 
-1. Count failed attempts by username as well as address.
-2. Add a configurable rolling time window with boundary tests.
-3. Stream large inputs instead of loading all lines.
-4. Add a JSON output mode and test escaping.
+1. Stream large input files instead of loading all lines.
+2. Add JSON output with tested escaping.
+3. Add per-user analysis without revealing personal information.
 
 ## Sharing
 
-Use [LINKEDIN.md](LINKEDIN.md) after reviewing and practicing the code. Do not publish input logs from real systems. This is a personal project, independent of school/team repositories. Repository: https://github.com/KENNETH-R-THOMPSON/security-log-explorer
+Use [LINKEDIN.md](LINKEDIN.md) after reviewing and practicing the code. This is a personal project, independent of school and team repositories. Repository: https://github.com/KENNETH-R-THOMPSON/security-log-explorer

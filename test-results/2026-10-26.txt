@@ -1,0 +1,38 @@
+PASS sample totals
+PASS inclusive threshold and grouping
+PASS higher threshold excludes address
+PASS empty input
+PASS success does not count as failure
+PASS reject zero threshold
+PASS immutable alert map
+PASS reject incorrect header
+PASS reject timestamp
+PASS reject result
+PASS reject empty user
+PASS reject extra column
+PASS reject unsupported quoting
+PASS header-only and blank rows
+PASS CLI sample report
+PASS CLI missing argument
+PASS CLI invalid threshold
+PASS CLI negative threshold
+PASS window includes exact two-minute boundary
+PASS shorter window excludes third failure
+PASS window reports maximum count, not total failures
+PASS window sorts out-of-order timestamps
+PASS distant failures do not combine in window
+PASS window finds latest cluster
+PASS window keeps addresses separate
+PASS window ignores successful logins
+PASS window accepts empty input
+PASS reject zero window
+PASS reject negative window
+PASS reject null window
+PASS window report is immutable
+PASS CLI window report
+PASS CLI short window has no alerts
+PASS CLI rejects zero window
+PASS CLI rejects nonnumeric window
+PASS CLI rejects negative window
+PASS CLI rejects extra arguments
+All 37 checks passed.

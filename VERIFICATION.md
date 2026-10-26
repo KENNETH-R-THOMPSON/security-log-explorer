@@ -1,13 +1,18 @@
-# Verification — October 25, 2026
+# Verification
 
-Compiled with installed OpenJDK 25 using --release 17.
+## October 25, 2026 (original project)
 
-- All 18 automated checks passed via ./test.sh.
-- ./run.sh produced 6 total events, 2 successes, 4 failures, and one address alert with 3 failures.
-- No external dependencies or network calls required.
+The original version was reported as compiled with OpenJDK 25 using `--release 17`. Its 18 checks and sample CLI report passed. IntelliJ build and Demo run were reported successful with OpenJDK 25.0.2.
 
-The test harness covers sample totals, threshold boundaries, grouping, empty input, success-only input, invalid thresholds, immutable reports, malformed headers/timestamps/results/fields, unsupported quoted CSV, blank rows, and CLI behavior.
+## October 26, 2026 (rolling-window update)
 
-IntelliJ verification: project opened with OpenJDK 25.0.2; IDE build completed successfully and the Demo run printed the expected report and finished with exit code 0.
+Environment: OpenJDK 21.0.12.1, `javac --release 17`, Linux. This verifies Java 17 language compatibility at compile time; execution on an installed Java 17 runtime was not separately tested.
 
-A local Git repository is initialized for practice. Publication is tracked in the Git history.
+- `./test.sh`: 37 checks passed, exit 0.
+- `./run.sh`: 6 events, 2 successes, 4 failures, one address alert with 3 failures.
+- `./run.sh sample/login-events.csv 3 2`: one alert for `192.0.2.10` with 3 failures within any 2-minute window.
+- `./run.sh sample/login-events.csv 3 1`: no alerts with threshold 3 in any 1-minute window.
+
+Checks cover original full-file behavior, inclusive window boundaries, out-of-order timestamps, distant failure clusters, address separation, empty input, successful events, invalid windows, immutable reports, parser validation, and CLI errors. No external dependencies or network calls were needed for these local tests.
+
+GitHub Actions and IntelliJ verification of this update remain unverified until independently run. Live authentication logs and production security monitoring were not tested.
