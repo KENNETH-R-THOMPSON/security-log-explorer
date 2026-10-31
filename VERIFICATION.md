@@ -16,3 +16,14 @@ Environment: OpenJDK 21.0.12.1, `javac --release 17`, Linux. This verifies Java 
 Checks cover original full-file behavior, inclusive window boundaries, out-of-order timestamps, distant failure clusters, address separation, empty input, successful events, invalid windows, immutable reports, parser validation, and CLI errors. No external dependencies or network calls were needed for these local tests.
 
 GitHub Actions and IntelliJ verification of this update remain unverified until independently run. Live authentication logs and production security monitoring were not tested.
+
+## October 31, 2026 (JSON report)
+
+Local environment: OpenJDK 21.0.12.1 on Linux, compiled with `javac --release 17`. The local run used a current working copy of the October 26 source and the JSON feature changes. Java 17 runtime execution is checked separately by GitHub Actions.
+
+- `sh ./test.sh`: all 45 checks passed, exit 0. Eight new checks cover default JSON, rolling-window JSON, empty alerts, escaping, sorted keys, invalid flag positions, and error output.
+- `sh ./run.sh sample/login-events.csv 3 2 --json`: produced the expected one-line JSON report.
+- Piped the two-minute and one-minute JSON examples into Python 3 `json.load` and checked expected values. Both checks passed.
+- Existing plain-text behavior was included in the 45 checks.
+
+These are local results. GitHub Actions for this branch must pass before merging. No production logs, live monitoring, or target Mac run were tested.
