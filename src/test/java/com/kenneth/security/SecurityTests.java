@@ -117,6 +117,35 @@ public final class SecurityTests {
                 "CLI rejects negative window");
         check(Main.run(new String[]{"sample/login-events.csv", "3", "2", "extra"}, out, err) == 2,
                 "CLI rejects extra arguments");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "--json"}, out, err) == 0
+                && outBytes.toString().trim().equals(
+                        "{\"total\":6,\"successful\":2,\"failed\":4,\"threshold\":3,\"windowMinutes\":null,\"alerts\":{\"192.0.2.10\":3}}")
+                && errBytes.size() == 0, "CLI JSON full-file report");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "2", "--json"}, out, err) == 0
+                && outBytes.toString().trim().equals(
+                        "{\"total\":6,\"successful\":2,\"failed\":4,\"threshold\":3,\"windowMinutes\":2,\"alerts\":{\"192.0.2.10\":3}}"),
+                "CLI JSON rolling-window report");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "1", "--json"}, out, err) == 0
+                && outBytes.toString().contains("\"alerts\":{}"), "CLI JSON empty alerts");
+        check(Main.toJson(new SecurityAnalyzer.Report(2, 0, 2,
+                Map.of("quote\"slash\\tab\tline\n", 2)), 2, null)
+                .contains("\"quote\\\"slash\\\\tab\\u0009line\\u000a\":2"),
+                "JSON escapes quotes, backslashes and control characters");
+        check(Main.toJson(new SecurityAnalyzer.Report(2, 0, 2,
+                Map.of("z", 1, "a", 1)), 1, null).contains("\"a\":1,\"z\":1"),
+                "JSON alert keys have deterministic order");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"--json"}, out, err) == 2
+                && outBytes.size() == 0, "CLI rejects JSON flag without a file");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "--json", "3"}, out, err) == 2
+                && outBytes.size() == 0, "CLI rejects misplaced JSON flag");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"missing.csv", "--json"}, out, err) == 2
+                && outBytes.size() == 0 && errBytes.size() > 0, "CLI JSON failure stays on stderr");
         System.out.println("All " + passed + " checks passed.");
     }
 }
