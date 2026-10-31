@@ -14,13 +14,30 @@ Install JDK 17 or newer and run these commands from the project folder:
 ./run.sh sample/login-events.csv 4
 ./run.sh sample/login-events.csv 3 2
 ./run.sh sample/login-events.csv 3 1
+./run.sh sample/login-events.csv 3 2 --json
 ```
 
-The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
+The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes] [--json]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
 
 ## How rolling windows work
 
 The analyzer groups failures by address and sorts each address's timestamps. It then finds the highest number of failures in any interval lasting at most the requested number of minutes. Both endpoints are included, so failures exactly two minutes apart count together in a 2-minute window. Input events may be out of timestamp order. Successes don't count as failures or reset earlier failures. The reported alert count is the highest count in one window, not the total across the file. The total, successful, and failed event counts still cover the entire file.
+
+## JSON reports
+
+Add `--json` as the final argument to print one JSON object instead of the text report. The output includes `total`, `successful`, `failed`, `threshold`, `windowMinutes` (null when no window is set), and `alerts` (an object mapping addresses to failure counts). Addresses are sorted, and quotes, backslashes, and control characters are escaped. An empty alert list becomes `"alerts":{}`.
+
+Example:
+
+```sh
+./run.sh sample/login-events.csv 3 2 --json
+```
+
+```json
+{"total":6,"successful":2,"failed":4,"threshold":3,"windowMinutes":2,"alerts":{"192.0.2.10":3}}
+```
+
+A successful analysis exits 0, including when there are no alerts. Invalid arguments and unreadable input exit 2 and print an error to stderr. JSON is only written on success. This makes the report usable with a script or a local dashboard without parsing the text output.
 
 ## IntelliJ IDEA
 
@@ -34,7 +51,7 @@ CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instan
 
 ## Tests and verification
 
-Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 37 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, and CLI behavior. See [VERIFICATION.md](VERIFICATION.md) for the exact local test environment and results. Live security monitoring and real log ingestion have not been tested.
+Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 45 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, JSON escaping, and CLI behavior. See [VERIFICATION.md](VERIFICATION.md) for the exact local test environment and results. Live security monitoring and real log ingestion have not been tested.
 
 ## Portfolio demonstration
 
@@ -43,8 +60,8 @@ Run the default sample, explain the result, then run the same sample with 2-minu
 ## Future improvements
 
 1. Stream large input files instead of loading all lines.
-2. Add JSON output with tested escaping.
-3. Add per-user analysis without revealing personal information.
+2. Add per-user analysis without revealing personal information.
+3. Test a larger synthetic dataset and document memory usage.
 
 ## Sharing
 

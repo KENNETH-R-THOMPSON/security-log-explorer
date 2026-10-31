@@ -30,3 +30,8 @@ jobs:
         run: |
           sh ./run.sh sample/login-events.csv 3 2
           sh ./run.sh sample/login-events.csv 3 1
+
+      - name: Check machine-readable JSON report
+        run: |
+          sh ./run.sh sample/login-events.csv 3 2 --json |
+            python3 -c 'import json,sys; report=json.load(sys.stdin); assert report["total"] == 6 and report["windowMinutes"] == 2 and report["alerts"] == {"192.0.2.10": 3}'
