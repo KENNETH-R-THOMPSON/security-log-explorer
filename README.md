@@ -1,5 +1,7 @@
 # Security Log Explorer
 
+[![Java 17 CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/workflows/java-ci.yml/badge.svg)](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/workflows/java-ci.yml)
+
 A Java 17+ portfolio and practice project prepared for Kenneth Thompson with AI assistance. Analyze synthetic sign-in logs and flag addresses with repeated failed logins. Supports either full-file counts or a configurable rolling time window. No external libraries, network access, or account credentials are required.
 
 ## Setup and run
