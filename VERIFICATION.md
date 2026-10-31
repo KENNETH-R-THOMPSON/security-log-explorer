@@ -27,3 +27,12 @@ Local environment: OpenJDK 21.0.12.1 on Linux, compiled with `javac --release 17
 - Existing plain-text behavior was included in the 45 checks.
 
 These are local results. GitHub Actions for this branch must pass before merging. No production logs, live monitoring, or target Mac run were tested.
+
+## October 31, 2026 (buffered CSV input)
+
+The parser now reads raw CSV lines with a buffered reader. It still retains parsed events in memory. Three new checks cover 5,000 fictional events, analysis totals, and an invalid event at physical line 5002.
+
+- Pull request: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/4
+- GitHub Actions pull-request run: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41192777174
+- Hosted Temurin Java 17: all 48 checks passed, exit 0. Sample reports and JSON parsing also passed.
+- This is CI evidence for the pull-request commit, not a new local or target Mac test. Full streaming analysis and live monitoring remain unimplemented.

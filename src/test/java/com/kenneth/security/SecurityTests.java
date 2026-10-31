@@ -146,6 +146,29 @@ public final class SecurityTests {
         outBytes.reset(); errBytes.reset();
         check(Main.run(new String[]{"missing.csv", "--json"}, out, err) == 2
                 && outBytes.size() == 0 && errBytes.size() > 0, "CLI JSON failure stays on stderr");
+        Path manyEvents = Files.createTempFile("security-many-events-", ".csv");
+        try {
+            StringBuilder input = new StringBuilder(header);
+            for (int i = 0; i < 5000; i++) {
+                input.append("2026-10-25T12:00:00Z,test,192.0.2.10,")
+                        .append(i % 3 == 0 ? "FAILURE" : "SUCCESS").append('\n');
+            }
+            Files.writeString(manyEvents, input.toString());
+            var parsed = LogParser.read(manyEvents);
+            check(parsed.size() == 5000, "read 5000 synthetic events");
+            check(SecurityAnalyzer.analyze(parsed, 1).total() == 5000,
+                    "analyze all synthetic events");
+            Files.writeString(manyEvents, input.append("invalid,row\n").toString());
+            try {
+                LogParser.read(manyEvents);
+                throw new AssertionError("missing invalid line error");
+            } catch (IllegalArgumentException expected) {
+                check(expected.getMessage().contains("line 5002"),
+                        "report physical line number after many rows");
+            }
+        } finally {
+            Files.deleteIfExists(manyEvents);
+        }
         System.out.println("All " + passed + " checks passed.");
     }
 }
