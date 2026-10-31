@@ -47,7 +47,7 @@ Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `Lo
 
 ## Input and limitations
 
-CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The parser loads the whole file into memory, and rolling-window mode sorts failures for each address. Use small practice datasets. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
+CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The parser reads CSV lines one at a time, but it still keeps the parsed events in memory for analysis. Rolling-window mode also sorts failure timestamps for each address. Use small practice datasets. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
 
 ## Tests and verification
 
@@ -59,7 +59,7 @@ Run the default sample, explain the result, then run the same sample with 2-minu
 
 ## Future improvements
 
-1. Stream large input files instead of loading all lines.
+1. Analyze events incrementally to avoid storing every parsed event.
 2. Add per-user analysis without revealing personal information.
 3. Test a larger synthetic dataset and document memory usage.
 
