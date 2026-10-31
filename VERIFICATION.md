@@ -36,3 +36,14 @@ The parser now reads raw CSV lines with a buffered reader. It still retains pars
 - GitHub Actions pull-request run: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41192777174
 - Hosted Temurin Java 17: all 48 checks passed, exit 0. Sample reports and JSON parsing also passed.
 - This is CI evidence for the pull-request commit, not a new local or target Mac test. Full streaming analysis and live monitoring remain unimplemented.
+
+## October 31, 2026 (streamed file summaries)
+
+The CLI now processes each validated CSV event as it is read. Full-file mode keeps per-address failure counts instead of storing all parsed events. Rolling-window mode keeps failed timestamps per address and still sorts them to handle out-of-order input. The list-returning parser API remains available for callers that need it.
+
+- Pull request: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/5
+- GitHub Actions push run: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41196857061
+- GitHub Actions PR run: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41196866020
+- Hosted Temurin Java 17: 52 checks passed, exit 0. Sample full-file and rolling-window reports passed. JSON report validation passed.
+- Four new checks compare streamed results with list analysis, process 5,000 fictional events, and verify that malformed input reports physical line 5002.
+- These are CI checks. The updated version has not been run on Kenneth's Mac or used for live authentication monitoring. Rolling-window analysis still stores failure timestamps in memory.

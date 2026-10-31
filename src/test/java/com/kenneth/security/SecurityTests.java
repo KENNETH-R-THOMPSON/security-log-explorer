@@ -34,6 +34,8 @@ public final class SecurityTests {
         var report = SecurityAnalyzer.analyze(sample, 3);
         check(report.total() == 6 && report.successful() == 2 && report.failed() == 4, "sample totals");
         check(report.alerts().equals(Map.of("192.0.2.10", 3)), "inclusive threshold and grouping");
+        check(SecurityAnalyzer.analyzeFile(Path.of("sample/login-events.csv"), 3).equals(report),
+                "streamed full-file report matches list analysis");
         check(SecurityAnalyzer.analyze(sample, 4).alerts().isEmpty(), "higher threshold excludes address");
         check(SecurityAnalyzer.analyze(List.of(), 1).total() == 0, "empty input");
         var ok = new LoginEvent(Instant.EPOCH, "user", "address", true);
@@ -65,6 +67,9 @@ public final class SecurityTests {
 
         var twoMinutes = Duration.ofMinutes(2);
         var oneMinute = Duration.ofMinutes(1);
+        check(SecurityAnalyzer.analyzeFile(Path.of("sample/login-events.csv"), 3, twoMinutes)
+                .equals(SecurityAnalyzer.analyze(sample, 3, twoMinutes)),
+                "streamed rolling-window report matches list analysis");
         check(SecurityAnalyzer.analyze(sample, 3, twoMinutes).alerts().equals(Map.of("192.0.2.10", 3)),
                 "window includes exact two-minute boundary");
         check(SecurityAnalyzer.analyze(sample, 3, oneMinute).alerts().isEmpty(),
@@ -158,6 +163,8 @@ public final class SecurityTests {
             check(parsed.size() == 5000, "read 5000 synthetic events");
             check(SecurityAnalyzer.analyze(parsed, 1).total() == 5000,
                     "analyze all synthetic events");
+            check(SecurityAnalyzer.analyzeFile(manyEvents, 1).total() == 5000,
+                    "stream 5000 events without building a list");
             Files.writeString(manyEvents, input.append("invalid,row\n").toString());
             try {
                 LogParser.read(manyEvents);
@@ -165,6 +172,13 @@ public final class SecurityTests {
             } catch (IllegalArgumentException expected) {
                 check(expected.getMessage().contains("line 5002"),
                         "report physical line number after many rows");
+            }
+            try {
+                SecurityAnalyzer.analyzeFile(manyEvents, 1);
+                throw new AssertionError("missing streamed invalid line error");
+            } catch (IllegalArgumentException expected) {
+                check(expected.getMessage().contains("line 5002"),
+                        "streaming reports physical line number after many rows");
             }
         } finally {
             Files.deleteIfExists(manyEvents);
