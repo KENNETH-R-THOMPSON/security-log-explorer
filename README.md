@@ -51,7 +51,7 @@ CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instan
 
 ## Tests and verification
 
-Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 45 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, JSON escaping, and CLI behavior. See [VERIFICATION.md](VERIFICATION.md) for the exact local test environment and results. Live security monitoring and real log ingestion have not been tested.
+Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 48 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, JSON escaping, and CLI behavior. The October 31 buffered-parser pull request passed 48 checks on a hosted Java 17 runner in [GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41192777174). See [VERIFICATION.md](VERIFICATION.md) for previous local results and the current CI evidence. Live security monitoring and real log ingestion have not been tested.
 
 ## Portfolio demonstration
 
