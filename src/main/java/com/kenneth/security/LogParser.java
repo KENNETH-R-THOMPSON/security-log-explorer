@@ -6,18 +6,24 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /** Strict four-column CSV parser; quoted fields are deliberately unsupported. */
 public final class LogParser {
     private LogParser() {}
 
     public static List<LoginEvent> read(Path path) throws IOException {
-        // Read one line at a time to avoid keeping a second copy of the input in memory.
+        List<LoginEvent> events = new ArrayList<>();
+        forEach(path, events::add);
+        return List.copyOf(events);
+    }
+
+    /** Validate and pass each event to the caller without storing the whole file. */
+    public static void forEach(Path path, Consumer<LoginEvent> accept) throws IOException {
         try (var reader = Files.newBufferedReader(path)) {
             if (!"timestamp,user,address,result".equals(reader.readLine())) {
                 throw new IllegalArgumentException("Expected header: timestamp,user,address,result");
             }
-            List<LoginEvent> events = new ArrayList<>();
             String line;
             int lineNumber = 1;
             while ((line = reader.readLine()) != null) {
@@ -34,13 +40,12 @@ public final class LogParser {
                     if (!fields[3].equals("SUCCESS") && !fields[3].equals("FAILURE")) {
                         throw new IllegalArgumentException();
                     }
-                    events.add(new LoginEvent(Instant.parse(fields[0]), fields[1], fields[2],
+                    accept.accept(new LoginEvent(Instant.parse(fields[0]), fields[1], fields[2],
                             fields[3].equals("SUCCESS")));
                 } catch (RuntimeException error) {
                     throw new IllegalArgumentException("Invalid event at line " + lineNumber, error);
                 }
             }
-            return List.copyOf(events);
         }
     }
 }

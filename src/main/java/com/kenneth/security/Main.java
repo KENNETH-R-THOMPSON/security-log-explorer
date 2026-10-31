@@ -23,10 +23,10 @@ public final class Main {
         try {
             int threshold = valueCount >= 2 ? Integer.parseInt(args[1]) : 3;
             Integer windowMinutes = valueCount == 3 ? Integer.parseInt(args[2]) : null;
-            var events = LogParser.read(Path.of(args[0]));
+            var path = Path.of(args[0]);
             var report = windowMinutes == null
-                    ? SecurityAnalyzer.analyze(events, threshold)
-                    : SecurityAnalyzer.analyze(events, threshold, Duration.ofMinutes(windowMinutes));
+                    ? SecurityAnalyzer.analyzeFile(path, threshold)
+                    : SecurityAnalyzer.analyzeFile(path, threshold, Duration.ofMinutes(windowMinutes));
             if (json) {
                 out.println(toJson(report, threshold, windowMinutes));
                 return 0;

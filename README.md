@@ -47,11 +47,11 @@ Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `Lo
 
 ## Input and limitations
 
-CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The parser reads CSV lines one at a time, but it still keeps the parsed events in memory for analysis. Rolling-window mode also sorts failure timestamps for each address. Use small practice datasets. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
+CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The command-line analyzer reads CSV events one at a time. Full-file mode keeps failure counts per address; rolling-window mode keeps failure timestamps per address and sorts them. The `LogParser.read` method still returns a list for callers that need one. Use synthetic practice datasets; large rolling-window inputs can still use substantial memory. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
 
 ## Tests and verification
 
-Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The 48 automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, JSON escaping, and CLI behavior. The October 31 buffered-parser pull request passed 48 checks on a hosted Java 17 runner in [GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41192777174). See [VERIFICATION.md](VERIFICATION.md) for previous local results and the current CI evidence. Live security monitoring and real log ingestion have not been tested.
+Run `./test.sh` to compile with `javac --release 17` and execute the dependency-free test harness. The automated checks cover parsing, original full-file behavior, rolling-window boundaries, out-of-order timestamps, address isolation, input validation, immutable reports, JSON escaping, and CLI behavior. The earlier October 31 buffered-parser pull request passed 48 checks on a hosted Java 17 runner in [GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41192777174). The streaming-summary update adds four checks; see `VERIFICATION.md` for the current run after CI completes. See [VERIFICATION.md](VERIFICATION.md) for previous local results and the current CI evidence. Live security monitoring and real log ingestion have not been tested.
 
 ## Portfolio demonstration
 
@@ -59,9 +59,9 @@ Run the default sample, explain the result, then run the same sample with 2-minu
 
 ## Future improvements
 
-1. Analyze events incrementally to avoid storing every parsed event.
+1. Measure memory use on larger synthetic files, especially rolling-window mode.
 2. Add per-user analysis without revealing personal information.
-3. Test a larger synthetic dataset and document memory usage.
+3. Consider a bounded-memory window approach when input timestamps are sorted.
 
 ## Sharing
 
