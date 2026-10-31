@@ -1,22 +1,23 @@
-# Suggested project entry
+# LinkedIn project draft
 
-**Title:** Security Log Explorer: Java Authentication Log Analysis
+Status: Draft. No LinkedIn project, Featured item, or post has been published or verified.
 
-**Description:** A personal Java learning and portfolio project, prepared with AI assistance, that analyzes synthetic login-event CSV files. It summarizes successful and failed attempts and flags addresses reaching a configurable threshold across the full file or within an inclusive rolling time window. It handles out-of-order timestamps, uses strict input validation and immutable report data, and can print a JSON report for other scripts to read. It includes dependency-free automated tests and IntelliJ practice configurations. Alerts are investigation leads, not proof of attacks.
+**Project:** Security Log Explorer
 
-**Skills:** Java, Unit Testing, JSON, Debugging, IntelliJ IDEA, Log Analysis, Sliding Window Algorithms.
+**Repository and suggested Featured link:** https://github.com/KENNETH-R-THOMPSON/security-log-explorer
 
-**Resume bullet options (adapt after reviewing and practicing):**
+**Description:** I worked on an AI-assisted Java 17 practice project that reads fictional authentication logs and identifies repeated failed sign-ins by address. It supports full-file counts, rolling time windows, and JSON reports. I updated the command-line analyzer to process events as it reads the CSV file. Full-file mode keeps per-address failure counts; rolling-window mode stores failed timestamps so it can handle out-of-order events. All 52 automated checks passed on hosted Java 17 in GitHub Actions on October 31, 2026.
 
-- Built a Java 17 authentication-log analyzer that groups failed sign-ins by address and identifies suspicious concentrations using configurable rolling time windows.
-- Implemented timestamp sorting, inclusive window-boundary handling, input validation, and deterministic reports; verified the current project with 45 local automated checks.
+**Skills:** Java, CSV parsing, JSON, Java collections, unit testing, Git, GitHub Actions, basic log analysis.
 
-**Accuracy note:** The initial project and this feature were prepared with AI assistance. Review and practice the implementation before describing your individual contributions in an interview. These checks use synthetic data; no live security deployment or production monitoring has been verified.
+**Verification:** https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41196945985
 
-# Post to adapt after practicing
+**Limits:** All data used in tests and examples is fictional. The rolling-window mode still keeps failed timestamps in memory. I haven't tested this version on my Mac or connected it to a live authentication system. I used AI assistance in preparing the project and should review the implementation before discussing individual contributions in an interview.
 
-I’m working through Security Log Explorer, a Java portfolio project that reads synthetic sign-in logs and reports repeated failures. The project supports rolling time windows, so alerts can reflect bursts of failed attempts. I also added an optional JSON report for scripts to read.
+**Resume bullet to adapt after reviewing the code:** Updated an AI-assisted Java 17 authentication-log practice tool with streamed CSV summaries, rolling-window failure detection and JSON output; 52 automated checks passed in hosted GitHub Actions.
 
-I used AI assistance in developing the project and am practicing the Java collections, sorting, debugging, and tests behind the implementation. The current project passed 45 local checks on Linux with Java 21 compiling for Java 17. GitHub Actions verification of the JSON change is tracked in the repository.
+## Optional short post
+
+I updated my Java Security Log Explorer practice project to process fictional sign-in events as the CSV file is read. It keeps per-address counts for full-file reports and failed timestamps for rolling-window reports. The current Java 17 GitHub Actions run passed 52 checks, including tests with 5,000 fictional events. I'm reviewing the code and tests as part of my computer science studies.
 
 Repository: https://github.com/KENNETH-R-THOMPSON/security-log-explorer

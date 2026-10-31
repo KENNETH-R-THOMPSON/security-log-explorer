@@ -6,7 +6,7 @@ Run **Demo - sample login report**. Predict why one address has 3 failures while
 
 ## 2. Navigate
 
-In Main, use Go to Declaration on `SecurityAnalyzer.analyze` (Command+B on the macOS keymap). Find usages of `LoginEvent`. Use Search Everywhere (double Shift) to locate `LogParser`, then Find in Files (Command+Shift+F) for `threshold`. Shortcuts depend on your keymap; all actions are available through Find Action.
+In Main, use Go to Declaration on `SecurityAnalyzer.analyzeFile` (Command+B on the macOS keymap). Follow `LogParser.forEach` into the `Summary.accept` method, then find usages of `LoginEvent`. Use Search Everywhere (double Shift) to locate `LogParser`, then Find in Files (Command+Shift+F) for `threshold`. Shortcuts depend on your keymap; all actions are available through Find Action.
 
 ## 3. Debug
 
