@@ -1,0 +1,32 @@
+name: Java 17 build and tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run automated checks
+        run: sh ./test.sh
+
+      - name: Run sample full-file report
+        run: sh ./run.sh
+
+      - name: Run rolling-window examples
+        run: |
+          sh ./run.sh sample/login-events.csv 3 2
+          sh ./run.sh sample/login-events.csv 3 1
