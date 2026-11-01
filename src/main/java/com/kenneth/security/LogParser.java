@@ -21,7 +21,12 @@ public final class LogParser {
     /** Validate and pass each event to the caller without storing the whole file. */
     public static void forEach(Path path, Consumer<LoginEvent> accept) throws IOException {
         try (var reader = Files.newBufferedReader(path)) {
-            if (!"timestamp,user,address,result".equals(reader.readLine())) {
+            String header = reader.readLine();
+            // Some CSV exports include a UTF-8 byte order mark before the header.
+            if (header != null && header.startsWith("\uFEFF")) {
+                header = header.substring(1);
+            }
+            if (!"timestamp,user,address,result".equals(header)) {
                 throw new IllegalArgumentException("Expected header: timestamp,user,address,result");
             }
             String line;
