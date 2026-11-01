@@ -47,3 +47,13 @@ The CLI now processes each validated CSV event as it is read. Full-file mode kee
 - Hosted Temurin Java 17: 52 checks passed, exit 0. Sample full-file and rolling-window reports passed. JSON report validation passed.
 - Four new checks compare streamed results with list analysis, process 5,000 fictional events, and verify that malformed input reports physical line 5002.
 - These are CI checks. The updated version has not been run on Kenneth's Mac or used for live authentication monitoring. Rolling-window analysis still stores failure timestamps in memory.
+
+## November 1, 2026 (CSV event-handler error reporting)
+
+The streaming parser now separates CSV parsing failures from errors raised by its caller's event handler. A malformed row still produces a line-numbered input error; a caller's exception keeps its original type and message.
+
+- Merged code and test change: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/11
+- Hosted Java 17 pull-request CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41302053529
+- Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41302090122
+- All 64 automated checks passed, including two new callback exception checks. The sample full-file, rolling-window, quoted CSV and JSON steps passed.
+- The earlier 62-check run is historical. No target Mac, real authentication logs, live monitoring or employer system was tested.
