@@ -143,6 +143,21 @@ public final class SecurityTests {
         }
         check(Main.run(new String[]{}, out, err) == 2, "CLI missing argument");
         check(Main.run(new String[]{"sample/login-events.csv", "bad"}, out, err) == 2, "CLI invalid threshold");
+        outBytes.reset(); errBytes.reset();
+        String unsafeThreshold = "bad" + (char) 27 + "[31m";
+        check(Main.run(new String[]{"sample/login-events.csv", unsafeThreshold}, out, err) == 2
+                && outBytes.size() == 0
+                && !errBytes.toString().contains(String.valueOf((char) 27))
+                && errBytes.toString().contains("\\u001b[31m"),
+                "CLI error escapes terminal control characters");
+        outBytes.reset(); errBytes.reset();
+        String bidiThreshold = "bad" + (char) 0x202e;
+        check(Main.run(new String[]{"sample/login-events.csv", bidiThreshold}, out, err) == 2
+                && outBytes.size() == 0
+                && !errBytes.toString().contains(String.valueOf((char) 0x202e))
+                && errBytes.toString().contains("\\u202e"),
+                "CLI error escapes bidirectional formatting characters");
+
         check(Main.run(new String[]{"sample/login-events.csv", "-1"}, out, err) == 2, "CLI negative threshold");
 
         var twoMinutes = Duration.ofMinutes(2);

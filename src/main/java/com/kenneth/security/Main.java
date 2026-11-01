@@ -43,7 +43,7 @@ public final class Main {
             out.println("Alerts are investigation leads, not proof of an attack.");
             return 0;
         } catch (IOException | IllegalArgumentException error) {
-            err.println("Error: " + error.getMessage());
+            err.println("Error: " + printableAddress(String.valueOf(error.getMessage())));
             return 2;
         }
     }

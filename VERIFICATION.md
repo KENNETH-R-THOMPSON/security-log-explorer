@@ -77,3 +77,12 @@ The CSV parser accepts a UTF-8 byte order mark only before the expected header. 
 - All 69 checks passed. The existing sample, rolling-window, JSON and quoted CSV steps also passed. The 66-check run is historical.
 - The synthetic BOM CSV example and its JSON CLI check passed in [PR #16 CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41321112318). The sample reports 3 events, 2 failures, 1 success and 2 failures for `198.51.100.2`.
 - No target Mac, real authentication logs, live monitoring or employer systems were tested.
+
+## November 1, 2026 (safe CLI error messages)
+
+Java number parsing errors can include the original user-supplied argument. CLI errors now use the existing terminal text escaping helper before printing to stderr. This covers terminal controls and bidirectional formatting characters without changing successful JSON or text reports.
+
+- Code and tests: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/17
+- Hosted Java 17 push CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41362100107
+- All 71 automated checks passed. Two new checks exercise an ANSI escape and a bidirectional formatting character in an invalid threshold. Sample, rolling-window, JSON, quoted CSV and BOM workflow steps passed.
+- The earlier 69-check result is historical. This is hosted CI, not testing on the owner's Mac or with real authentication logs. No live security monitoring was verified.
