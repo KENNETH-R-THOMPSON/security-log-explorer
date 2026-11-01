@@ -75,5 +75,5 @@ The CSV parser accepts a UTF-8 byte order mark only before the expected header. 
 - Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41320939291
 - Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41321001774
 - All 69 checks passed. The existing sample, rolling-window, JSON and quoted CSV steps also passed. The 66-check run is historical.
-- A separate fictional BOM CSV sample and workflow check are added in the follow-up documentation PR. Their CI result must be verified separately before claiming the new sample passed.
+- The synthetic BOM CSV example and its JSON CLI check passed in [PR #16 CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41321112318). The sample reports 3 events, 2 failures, 1 success and 2 failures for `198.51.100.2`.
 - No target Mac, real authentication logs, live monitoring or employer systems were tested.
