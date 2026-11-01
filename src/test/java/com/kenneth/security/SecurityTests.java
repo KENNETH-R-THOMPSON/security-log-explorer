@@ -82,6 +82,31 @@ public final class SecurityTests {
         var err = new PrintStream(errBytes);
         check(Main.run(new String[]{"sample/login-events.csv"}, out, err) == 0
                 && outBytes.toString().contains("192.0.2.10 : 3 failures"), "CLI sample report");
+        check(Main.printableAddress("192.0.2.10").equals("192.0.2.10"),
+                "ordinary address stays readable");
+        String unsafeAddress = "192.0.2.10" + (char) 27 + "[31m" + (char) 0x202e;
+        String escapedAddress = "192.0.2.10" + "\\" + "u001b[31m" + "\\" + "u202e";
+        check(Main.printableAddress(unsafeAddress).equals(escapedAddress),
+                "escape terminal and bidirectional controls");
+        Path controlFile = Files.createTempFile("security-control-address-", ".csv");
+        try {
+            Files.writeString(controlFile, header
+                    + "2026-10-25T12:00:00Z,test," + unsafeAddress + ",FAILURE\n");
+            outBytes.reset();
+            errBytes.reset();
+            check(Main.run(new String[]{controlFile.toString(), "1"}, out, err) == 0
+                    && outBytes.toString().contains(escapedAddress + " : 1 failures")
+                    && !outBytes.toString().contains(unsafeAddress),
+                    "CLI text report escapes unsafe address");
+            outBytes.reset();
+            errBytes.reset();
+            check(Main.run(new String[]{controlFile.toString(), "1", "--json"}, out, err) == 0
+                    && outBytes.toString().contains("\\u001b")
+                    && outBytes.toString().contains(String.valueOf((char) 0x202e)),
+                    "JSON report preserves machine-readable address");
+        } finally {
+            Files.deleteIfExists(controlFile);
+        }
         check(Main.run(new String[]{}, out, err) == 2, "CLI missing argument");
         check(Main.run(new String[]{"sample/login-events.csv", "bad"}, out, err) == 2, "CLI invalid threshold");
         check(Main.run(new String[]{"sample/login-events.csv", "-1"}, out, err) == 2, "CLI negative threshold");
