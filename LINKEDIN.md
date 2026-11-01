@@ -6,7 +6,7 @@ Status: Draft. No LinkedIn project, Featured item, or post has been published or
 
 **Repository and suggested Featured link:** https://github.com/KENNETH-R-THOMPSON/security-log-explorer
 
-**Description:** I worked on an AI-assisted Java 17 practice project that reads fictional sign-in events and flags repeated failures by address. It supports rolling time windows, quoted CSV fields, and JSON reports. I updated the text report to escape control and bidirectional formatting characters in address labels, so synthetic input can't add terminal commands or misleading formatting to the alert lines. Four new checks brought the test suite to 62 passing checks on hosted Java 17 in GitHub Actions on November 1, 2026.
+**Description:** I worked on an AI-assisted Java 17 practice project that reads fictional sign-in events and flags repeated failures by address. It supports rolling time windows, quoted CSV fields, and JSON reports. I updated the text report to escape control and bidirectional formatting characters in address labels, so the alert lines don't echo raw terminal escape sequences. Four new checks brought the test suite to 62 passing checks on hosted Java 17 in GitHub Actions on November 1, 2026.
 
 **Skills:** Java, CSV parsing, JSON, input validation, safe terminal output, Java collections, automated testing, Git, GitHub Actions.
 
