@@ -62,6 +62,24 @@ public final class SecurityTests {
             check(SecurityAnalyzer.analyzeFile(quoted, 1)
                     .equals(SecurityAnalyzer.analyze(quotedEvents, 1)),
                     "streamed quoted CSV matches list analysis");
+            try {
+                LogParser.forEach(quoted, event -> {
+                    throw new IllegalStateException("consumer failed");
+                });
+                throw new AssertionError("consumer failure was swallowed");
+            } catch (IllegalStateException expected) {
+                check("consumer failed".equals(expected.getMessage()),
+                        "preserve consumer exception type and message");
+            }
+            try {
+                LogParser.forEach(quoted, event -> {
+                    throw new IllegalArgumentException("caller rejected event");
+                });
+                throw new AssertionError("consumer rejection was swallowed");
+            } catch (IllegalArgumentException expected) {
+                check("caller rejected event".equals(expected.getMessage()),
+                        "do not label consumer rejection as invalid CSV");
+            }
         } finally { Files.deleteIfExists(quoted); }
         rejects(header + "2026-10-25T12:00:00Z,\"unfinished,a,FAILURE\n",
                 "reject unclosed quoted field");
