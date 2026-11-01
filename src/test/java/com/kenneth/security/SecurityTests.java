@@ -45,6 +45,17 @@ public final class SecurityTests {
         try { report.alerts().put("other", 9); throw new AssertionError("mutable report"); }
         catch (UnsupportedOperationException expected) { check(true, "immutable alert map"); }
         rejects("bad header\n", "reject incorrect header");
+        Path bomFile = Files.createTempFile("security-bom-", ".csv");
+        try {
+            Files.writeString(bomFile, "\uFEFFtimestamp,user,address,result\r\n"
+                    + "2026-10-25T12:00:00Z,u,198.51.100.2,FAILURE\r\n");
+            var bomEvents = LogParser.read(bomFile);
+            check(bomEvents.size() == 1 && bomEvents.get(0).address().equals("198.51.100.2"),
+                    "read UTF-8 BOM header with CRLF lines");
+            check(SecurityAnalyzer.analyzeFile(bomFile, 1).alerts().equals(Map.of("198.51.100.2", 1)),
+                    "stream BOM-prefixed CSV into analyzer");
+        } finally { Files.deleteIfExists(bomFile); }
+        rejects("\uFEFFwrong,user,address,result\n", "reject incorrect BOM-prefixed header");
         rejects(header + "not-a-time,u,a,FAILURE\n", "reject timestamp");
         rejects(header + "2026-10-25T12:00:00Z,u,a,UNKNOWN\n", "reject result");
         rejects(header + "2026-10-25T12:00:00Z,,a,FAILURE\n", "reject empty user");
