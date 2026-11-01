@@ -57,3 +57,12 @@ The streaming parser now separates CSV parsing failures from errors raised by it
 - Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41302090122
 - All 64 automated checks passed, including two new callback exception checks. The sample full-file, rolling-window, quoted CSV and JSON steps passed.
 - The earlier 62-check run is historical. No target Mac, real authentication logs, live monitoring or employer system was tested.
+
+## November 1, 2026 (literal backslash alert labels)
+
+Text alert labels now double literal backslashes so a value containing literal escape-looking text remains distinguishable from a real escape character rendered in escaped notation. JSON alert keys remain unchanged for machine use.
+
+- Code and test change: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/13
+- Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41316588129
+- All 66 checks passed, including two new regression checks. Sample full-file, rolling-window, JSON and quoted CSV workflow steps passed.
+- The earlier 64-check result is historical. This doesn't verify target Mac behavior, live monitoring, or resistance to Unicode lookalike characters beyond the escaped categories.
