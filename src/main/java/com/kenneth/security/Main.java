@@ -39,13 +39,34 @@ public final class Main {
                     : "across this file";
             out.println("Addresses with at least " + threshold + " failures " + scope + ":");
             if (report.alerts().isEmpty()) out.println("None");
-            report.alerts().forEach((address, count) -> out.println(address + " : " + count + " failures"));
+            report.alerts().forEach((address, count) -> out.println(printableAddress(address) + " : " + count + " failures"));
             out.println("Alerts are investigation leads, not proof of an attack.");
             return 0;
         } catch (IOException | IllegalArgumentException error) {
             err.println("Error: " + error.getMessage());
             return 2;
         }
+    }
+
+    /** Keep control and bidirectional formatting characters out of terminal reports. */
+    static String printableAddress(String address) {
+        StringBuilder safe = new StringBuilder();
+        String hex = "0123456789abcdef";
+        for (int i = 0; i < address.length(); i++) {
+            char ch = address.charAt(i);
+            int type = Character.getType(ch);
+            if (Character.isISOControl(ch) || type == Character.FORMAT
+                    || type == Character.LINE_SEPARATOR || type == Character.PARAGRAPH_SEPARATOR) {
+                safe.append('\\').append('u')
+                        .append(hex.charAt((ch >> 12) & 15))
+                        .append(hex.charAt((ch >> 8) & 15))
+                        .append(hex.charAt((ch >> 4) & 15))
+                        .append(hex.charAt(ch & 15));
+            } else {
+                safe.append(ch);
+            }
+        }
+        return safe.toString();
     }
 
     /** One-line JSON for tools that need to read the report. */
