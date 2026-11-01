@@ -49,7 +49,28 @@ public final class SecurityTests {
         rejects(header + "2026-10-25T12:00:00Z,u,a,UNKNOWN\n", "reject result");
         rejects(header + "2026-10-25T12:00:00Z,,a,FAILURE\n", "reject empty user");
         rejects(header + "2026-10-25T12:00:00Z,u,a,FAILURE,extra\n", "reject extra column");
-        rejects(header + "2026-10-25T12:00:00Z,\"u\",a,FAILURE\n", "reject unsupported quoting");
+        Path quoted = Files.createTempFile("security-quoted-", ".csv");
+        try {
+            Files.writeString(quoted, header
+                    + "\"2026-10-25T12:00:00Z\",\"sam, jr\",\"192.0.2.10\",FAILURE\n"
+                    + "2026-10-25T12:01:00Z,\"sam \"\"junior\"\"\",192.0.2.10,SUCCESS\n");
+            var quotedEvents = LogParser.read(quoted);
+            check(quotedEvents.size() == 2 && quotedEvents.get(0).user().equals("sam, jr"),
+                    "read quoted commas");
+            check(quotedEvents.get(1).user().equals("sam \"junior\""),
+                    "read escaped CSV quotes");
+            check(SecurityAnalyzer.analyzeFile(quoted, 1)
+                    .equals(SecurityAnalyzer.analyze(quotedEvents, 1)),
+                    "streamed quoted CSV matches list analysis");
+        } finally { Files.deleteIfExists(quoted); }
+        rejects(header + "2026-10-25T12:00:00Z,\"unfinished,a,FAILURE\n",
+                "reject unclosed quoted field");
+        rejects(header + "2026-10-25T12:00:00Z,\"sam\"extra,a,FAILURE\n",
+                "reject characters after quoted field");
+        rejects(header + "2026-10-25T12:00:00Z,sam\"bad,a,FAILURE\n",
+                "reject quote inside unquoted field");
+        rejects(header + "2026-10-25T12:00:00Z,\"sam\",a,FAILURE,extra\n",
+                "reject extra column after quoted field");
         Path empty = Files.createTempFile("security-empty-", ".csv");
         try {
             Files.writeString(empty, header + "\n");
