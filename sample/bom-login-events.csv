@@ -1,0 +1,4 @@
+﻿timestamp,user,address,result
+2026-10-25T12:00:00Z,example-user,198.51.100.2,FAILURE
+2026-10-25T12:01:00Z,example-user,198.51.100.2,FAILURE
+2026-10-25T12:02:00Z,example-user,198.51.100.2,SUCCESS

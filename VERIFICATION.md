@@ -66,3 +66,14 @@ Text alert labels now double literal backslashes so a value containing literal e
 - Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41316588129
 - All 66 checks passed, including two new regression checks. Sample full-file, rolling-window, JSON and quoted CSV workflow steps passed.
 - The earlier 64-check result is historical. This doesn't verify target Mac behavior, live monitoring, or resistance to Unicode lookalike characters beyond the escaped categories.
+
+## November 1, 2026 (UTF-8 BOM CSV headers)
+
+The CSV parser accepts a UTF-8 byte order mark only before the expected header. Strict column and row validation remains unchanged. Three fictional regression checks cover a BOM with CRLF, streaming analysis, and an invalid BOM-prefixed header.
+
+- Code and test change: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/15
+- Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41320939291
+- Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41321001774
+- All 69 checks passed. The existing sample, rolling-window, JSON and quoted CSV steps also passed. The 66-check run is historical.
+- The synthetic BOM CSV example and its JSON CLI check passed in [PR #16 CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41321112318). The sample reports 3 events, 2 failures, 1 success and 2 failures for `198.51.100.2`.
+- No target Mac, real authentication logs, live monitoring or employer systems were tested.
