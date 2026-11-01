@@ -102,6 +102,11 @@ public final class SecurityTests {
                 && outBytes.toString().contains("192.0.2.10 : 3 failures"), "CLI sample report");
         check(Main.printableAddress("192.0.2.10").equals("192.0.2.10"),
                 "ordinary address stays readable");
+        check(Main.printableAddress("192.0.2.10\\tag").equals("192.0.2.10\\\\tag"),
+                "escape literal backslash in text address");
+        check(!Main.printableAddress("192.0.2.10\\u001b")
+                .equals(Main.printableAddress("192.0.2.10" + (char) 27)),
+                "literal escape text differs from a control character");
         String unsafeAddress = "192.0.2.10" + (char) 27 + "[31m" + (char) 0x202e;
         String escapedAddress = "192.0.2.10" + "\\" + "u001b[31m" + "\\" + "u202e";
         check(Main.printableAddress(unsafeAddress).equals(escapedAddress),

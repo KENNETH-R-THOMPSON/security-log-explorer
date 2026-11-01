@@ -55,7 +55,9 @@ public final class Main {
         for (int i = 0; i < address.length(); i++) {
             char ch = address.charAt(i);
             int type = Character.getType(ch);
-            if (Character.isISOControl(ch) || type == Character.FORMAT
+            if (ch == '\\') {
+                safe.append("\\\\");
+            } else if (Character.isISOControl(ch) || type == Character.FORMAT
                     || type == Character.LINE_SEPARATOR || type == Character.PARAGRAPH_SEPARATOR) {
                 safe.append('\\').append('u')
                         .append(hex.charAt((ch >> 12) & 15))
