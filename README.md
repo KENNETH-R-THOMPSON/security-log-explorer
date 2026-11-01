@@ -39,6 +39,10 @@ Example:
 
 A successful analysis exits 0, including when there are no alerts. Invalid arguments and unreadable input exit 2 and print an error to stderr. JSON is only written on success. This makes the report usable with a script or a local dashboard without parsing the text output.
 
+## Quoted CSV demonstration
+
+Run `./run.sh sample/quoted-login-events.csv 3 2 --json`. The four fictional rows include usernames with commas and escaped quotes. The result has three failures, one success, and one alert for `192.0.2.10` with a count of three. The parser handles one physical line per event and rejects malformed or multiline quoted fields. No real account records are included.
+
 ## IntelliJ IDEA
 
 Open this folder. Choose **Demo - sample login report** in the run menu, then Run. Choose **Tests - all checks** for the test suite. If asked for an SDK, select an installed JDK 17 or newer. The executable scripts work independently of IntelliJ's build configuration. To try rolling windows in the IDE, add `3 2` after `sample/login-events.csv` in the Demo program arguments.
@@ -47,7 +51,7 @@ Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `Lo
 
 ## Input and limitations
 
-CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank, quoted, or padded with whitespace. This intentionally supports a simple CSV subset; embedded commas and multiline fields are unsupported. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The command-line analyzer reads CSV events one at a time. Full-file mode keeps failure counts per address; rolling-window mode keeps failure timestamps per address and sorts them. The `LogParser.read` method still returns a list for callers that need one. Use synthetic practice datasets; large rolling-window inputs can still use substantial memory. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
+CSV header: `timestamp,user,address,result`. Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank or padded with whitespace. Single-line quoted CSV fields are supported, including commas and doubled double quotes (for example, `"sam, jr"` or `"sam ""junior"""`). Malformed quoting, extra columns and multiline fields are rejected with a physical line number. The address is an opaque grouping key, not a validated IP address. Blank lines are ignored. The command-line analyzer reads CSV events one at a time. Full-file mode keeps failure counts per address; rolling-window mode keeps failure timestamps per address and sorts them. The `LogParser.read` method still returns a list for callers that need one. Use synthetic practice datasets; large rolling-window inputs can still use substantial memory. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
 
 ## Tests and verification
 

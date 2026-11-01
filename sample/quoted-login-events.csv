@@ -1,0 +1,5 @@
+timestamp,user,address,result
+2026-10-25T12:00:00Z,"sam, jr",192.0.2.10,FAILURE
+2026-10-25T12:01:00Z,"sam ""junior""",192.0.2.10,FAILURE
+2026-10-25T12:02:00Z,"sam, jr",192.0.2.10,FAILURE
+2026-10-25T12:03:00Z,other,192.0.2.11,SUCCESS
