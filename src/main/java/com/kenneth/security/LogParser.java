@@ -29,6 +29,7 @@ public final class LogParser {
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
                 if (line.isBlank()) continue;
+                LoginEvent event;
                 try {
                     List<String> fields = splitCsvLine(line);
                     if (fields.size() != 4) throw new IllegalArgumentException();
@@ -40,11 +41,13 @@ public final class LogParser {
                     if (!fields.get(3).equals("SUCCESS") && !fields.get(3).equals("FAILURE")) {
                         throw new IllegalArgumentException();
                     }
-                    accept.accept(new LoginEvent(Instant.parse(fields.get(0)), fields.get(1),
-                            fields.get(2), fields.get(3).equals("SUCCESS")));
+                    event = new LoginEvent(Instant.parse(fields.get(0)), fields.get(1),
+                            fields.get(2), fields.get(3).equals("SUCCESS"));
                 } catch (RuntimeException error) {
                     throw new IllegalArgumentException("Invalid event at line " + lineNumber, error);
                 }
+                // Caller failures are not malformed CSV records.
+                accept.accept(event);
             }
         }
     }
