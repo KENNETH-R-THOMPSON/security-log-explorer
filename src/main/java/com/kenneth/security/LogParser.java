@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Strict four-column CSV parser; quoted fields are deliberately unsupported. */
+/** Reads four-column CSV login events, including quoted fields on one line. */
 public final class LogParser {
     private LogParser() {}
 
@@ -29,23 +29,61 @@ public final class LogParser {
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
                 if (line.isBlank()) continue;
-                String[] fields = line.split(",", -1);
                 try {
-                    if (fields.length != 4) throw new IllegalArgumentException();
+                    List<String> fields = splitCsvLine(line);
+                    if (fields.size() != 4) throw new IllegalArgumentException();
                     for (String field : fields) {
-                        if (field.isBlank() || field.contains("\"") || !field.equals(field.trim())) {
+                        if (field.isBlank() || !field.equals(field.trim())) {
                             throw new IllegalArgumentException();
                         }
                     }
-                    if (!fields[3].equals("SUCCESS") && !fields[3].equals("FAILURE")) {
+                    if (!fields.get(3).equals("SUCCESS") && !fields.get(3).equals("FAILURE")) {
                         throw new IllegalArgumentException();
                     }
-                    accept.accept(new LoginEvent(Instant.parse(fields[0]), fields[1], fields[2],
-                            fields[3].equals("SUCCESS")));
+                    accept.accept(new LoginEvent(Instant.parse(fields.get(0)), fields.get(1),
+                            fields.get(2), fields.get(3).equals("SUCCESS")));
                 } catch (RuntimeException error) {
                     throw new IllegalArgumentException("Invalid event at line " + lineNumber, error);
                 }
             }
         }
+    }
+
+    /** A small CSV reader for one physical line. Multiline fields aren't supported. */
+    private static List<String> splitCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder value = new StringBuilder();
+        boolean inQuotes = false;
+        boolean afterQuote = false;
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+            if (inQuotes) {
+                if (ch == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        value.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                        afterQuote = true;
+                    }
+                } else {
+                    value.append(ch);
+                }
+            } else if (ch == ',') {
+                fields.add(value.toString());
+                value.setLength(0);
+                afterQuote = false;
+            } else if (afterQuote) {
+                throw new IllegalArgumentException("Text after quoted field");
+            } else if (ch == '"') {
+                if (value.length() != 0) throw new IllegalArgumentException("Quote in unquoted field");
+                inQuotes = true;
+            } else {
+                value.append(ch);
+            }
+        }
+        if (inQuotes) throw new IllegalArgumentException("Unclosed quoted field");
+        fields.add(value.toString());
+        return fields;
     }
 }
