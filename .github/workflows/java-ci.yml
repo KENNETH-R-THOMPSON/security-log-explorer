@@ -39,6 +39,11 @@ jobs:
           sh ./run.sh sample/login-events.csv 3 2 --json |
             python3 -c 'import json,sys; report=json.load(sys.stdin); assert report["total"] == 6 and report["windowMinutes"] == 2 and report["alerts"] == {"192.0.2.10": 3}'
 
+      - name: Check chronological streaming JSON report
+        run: |
+          sh ./run.sh sample/login-events.csv 3 2 --sorted --by-user --json |
+            python3 -c 'import json,sys; r=json.load(sys.stdin); assert (r["total"],r["sortedInput"],r["groupBy"],r["alerts"]) == (6,True,"user",{"alex":3})'
+
       - name: Check quoted CSV example
         run: |
           sh ./run.sh sample/quoted-login-events.csv 3 2 --json |

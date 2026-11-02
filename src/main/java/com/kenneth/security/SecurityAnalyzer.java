@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,16 +66,38 @@ public final class SecurityAnalyzer {
         return analyzeFileInternal(path, threshold, window, true);
     }
 
+    /** Use a sliding queue when the entire CSV is in chronological order. */
+    public static Report analyzeSortedFile(Path path, int threshold, Duration window) throws IOException {
+        return analyzeSortedFileInternal(path, threshold, window, false);
+    }
+
+    public static Report analyzeSortedFileByUser(Path path, int threshold, Duration window) throws IOException {
+        return analyzeSortedFileInternal(path, threshold, window, true);
+    }
+
+    private static Report analyzeSortedFileInternal(Path path, int threshold, Duration window,
+                                                     boolean byUser) throws IOException {
+        if (window == null || window.isZero() || window.isNegative()) {
+            throw new IllegalArgumentException("Window must be a positive duration");
+        }
+        return analyzeFileInternal(path, threshold, window, byUser, true);
+    }
+
     private static Report analyzeFileInternal(Path path, int threshold, Duration window, boolean byUser) throws IOException {
+        return analyzeFileInternal(path, threshold, window, byUser, false);
+    }
+
+    private static Report analyzeFileInternal(Path path, int threshold, Duration window,
+                                              boolean byUser, boolean sorted) throws IOException {
         if (threshold < 1) throw new IllegalArgumentException("Threshold must be at least 1");
-        Summary summary = new Summary(window, byUser);
+        Summary summary = new Summary(window, byUser, sorted);
         LogParser.forEach(path, summary::accept);
         return summary.report(threshold);
     }
 
     private static Report analyzeInternal(List<LoginEvent> events, int threshold, Duration window, boolean byUser) {
         if (threshold < 1) throw new IllegalArgumentException("Threshold must be at least 1");
-        Summary summary = new Summary(window, byUser);
+        Summary summary = new Summary(window, byUser, false);
         for (LoginEvent event : events) summary.accept(event);
         return summary.report(threshold);
     }
@@ -83,17 +106,38 @@ public final class SecurityAnalyzer {
     private static final class Summary {
         private final Duration window;
         private final boolean byUser;
+        private final boolean sorted;
         private final Map<String, Integer> counts = new TreeMap<>();
         private final Map<String, List<Instant>> timestamps = new TreeMap<>();
+        private final ArrayDeque<Failure> recentFailures = new ArrayDeque<>();
+        private final Map<String, Integer> currentCounts = new TreeMap<>();
+        private final Map<String, Integer> maximums = new TreeMap<>();
+        private Instant lastTimestamp;
         private int total;
         private int successful;
 
-        private Summary(Duration window, boolean byUser) {
+        private record Failure(Instant timestamp, String key) {}
+
+        private Summary(Duration window, boolean byUser, boolean sorted) {
             this.window = window;
             this.byUser = byUser;
+            this.sorted = sorted;
         }
 
         private void accept(LoginEvent event) {
+            if (sorted) {
+                if (lastTimestamp != null && event.timestamp().isBefore(lastTimestamp)) {
+                    throw new IllegalArgumentException("Sorted mode requires nondecreasing timestamps");
+                }
+                lastTimestamp = event.timestamp();
+                // Expire failures on every event, including successful logins.
+                while (!recentFailures.isEmpty()
+                        && Duration.between(recentFailures.peekFirst().timestamp(), lastTimestamp)
+                                .compareTo(window) > 0) {
+                    String expiredKey = recentFailures.removeFirst().key();
+                    currentCounts.computeIfPresent(expiredKey, (key, count) -> count == 1 ? null : count - 1);
+                }
+            }
             total++;
             if (event.success()) {
                 successful++;
@@ -101,6 +145,10 @@ public final class SecurityAnalyzer {
                 String key = byUser ? event.user() : event.address();
                 if (window == null) {
                     counts.merge(key, 1, Integer::sum);
+                } else if (sorted) {
+                    recentFailures.addLast(new Failure(event.timestamp(), key));
+                    int count = currentCounts.merge(key, 1, Integer::sum);
+                    maximums.merge(key, count, Math::max);
                 } else {
                     timestamps.computeIfAbsent(key, name -> new ArrayList<>()).add(event.timestamp());
                 }
@@ -111,6 +159,10 @@ public final class SecurityAnalyzer {
             Map<String, Integer> alerts = new TreeMap<>();
             if (window == null) {
                 for (var entry : counts.entrySet()) {
+                    if (entry.getValue() >= threshold) alerts.put(entry.getKey(), entry.getValue());
+                }
+            } else if (sorted) {
+                for (var entry : maximums.entrySet()) {
                     if (entry.getValue() >= threshold) alerts.put(entry.getKey(), entry.getValue());
                 }
             } else {
