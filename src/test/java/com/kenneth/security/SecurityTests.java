@@ -339,6 +339,86 @@ public final class SecurityTests {
         } finally {
             Files.deleteIfExists(largeWindowFile);
         }
+        // Chronological mode evicts old failures as it reads each row.
+        Path chronologicalSample = Path.of("sample/login-events.csv");
+        check(SecurityAnalyzer.analyzeSortedFile(chronologicalSample, 3, twoMinutes)
+                .equals(SecurityAnalyzer.analyzeFile(chronologicalSample, 3, twoMinutes)),
+                "sorted address window matches ordinary analysis");
+        check(SecurityAnalyzer.analyzeSortedFileByUser(chronologicalSample, 3, twoMinutes)
+                .equals(SecurityAnalyzer.analyzeFileByUser(chronologicalSample, 3, twoMinutes)),
+                "sorted username window matches ordinary analysis");
+        try {
+            SecurityAnalyzer.analyzeSortedFile(chronologicalSample, 1, Duration.ZERO);
+            throw new AssertionError("sorted zero window");
+        } catch (IllegalArgumentException expected) {
+            check(true, "sorted mode rejects zero window");
+        }
+        Path sameTime = Files.createTempFile("security-same-time-", ".csv");
+        try {
+            Files.writeString(sameTime, header
+                    + "2026-10-25T12:00:00Z,sam,192.0.2.1,FAILURE\n"
+                    + "2026-10-25T12:00:00Z,sam,192.0.2.2,FAILURE\n"
+                    + "2026-10-25T12:03:00Z,sam,192.0.2.2,SUCCESS\n"
+                    + "2026-10-25T12:04:00Z,sam,192.0.2.1,FAILURE\n");
+            check(SecurityAnalyzer.analyzeSortedFileByUser(sameTime, 2, twoMinutes)
+                    .alerts().equals(Map.of("sam", 2)),
+                    "equal timestamps count and expired failures do not");
+            check(SecurityAnalyzer.analyzeSortedFile(sameTime, 2, twoMinutes)
+                    .alerts().isEmpty(), "sorted address grouping stays separate");
+        } finally {
+            Files.deleteIfExists(sameTime);
+        }
+        Path outOfOrder = Files.createTempFile("security-out-of-order-", ".csv");
+        try {
+            Files.writeString(outOfOrder, header
+                    + "2026-10-25T12:02:00Z,sam,192.0.2.1,FAILURE\n"
+                    + "2026-10-25T12:01:00Z,sam,192.0.2.1,SUCCESS\n");
+            try {
+                SecurityAnalyzer.analyzeSortedFile(outOfOrder, 1, twoMinutes);
+                throw new AssertionError("unsorted success row accepted");
+            } catch (IllegalArgumentException expected) {
+                check(expected.getMessage().contains("nondecreasing"),
+                        "sorted mode rejects out-of-order successful rows");
+            }
+            check(SecurityAnalyzer.analyzeFile(outOfOrder, 1, twoMinutes)
+                    .alerts().equals(Map.of("192.0.2.1", 1)),
+                    "ordinary mode still handles out-of-order rows");
+        } finally {
+            Files.deleteIfExists(outOfOrder);
+        }
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "2", "--sorted", "--by-user", "--json"},
+                out, err) == 0
+                && outBytes.toString().contains("\"sortedInput\":true")
+                && outBytes.toString().contains("\"groupBy\":\"user\"")
+                && outBytes.toString().contains("\"alerts\":{\"alex\":3}")
+                && errBytes.size() == 0, "CLI sorted user JSON report");
+        check(Main.run(new String[]{"sample/login-events.csv", "--sorted"}, out, err) == 2,
+                "CLI sorted mode requires a window and threshold");
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "2", "--by-user", "--sorted"},
+                out, err) == 2, "CLI rejects misplaced sorted flag");
+        Path largeChronological = Files.createTempFile("security-chronological-", ".csv");
+        try {
+            try (var writer = Files.newBufferedWriter(largeChronological)) {
+                writer.write(header);
+                Instant start = Instant.parse("2026-10-25T00:00:00Z");
+                for (int i = 0; i < 50_000; i++) {
+                    writer.write(start.plusSeconds(i).toString());
+                    writer.write(",sam,192.0.2.10,FAILURE\n");
+                }
+            }
+            var chronologicalReport = SecurityAnalyzer.analyzeSortedFile(
+                    largeChronological, 61, Duration.ofMinutes(1));
+            check(chronologicalReport.total() == 50_000
+                    && chronologicalReport.alerts().equals(Map.of("192.0.2.10", 61)),
+                    "50000 chronological failures preserve inclusive sliding window");
+            check(SecurityAnalyzer.analyzeSortedFileByUser(
+                    largeChronological, 61, Duration.ofMinutes(1))
+                    .alerts().equals(Map.of("sam", 61)),
+                    "50000 chronological failures preserve user window");
+        } finally {
+            Files.deleteIfExists(largeChronological);
+        }
         System.out.println("All " + passed + " checks passed.");
     }
 }
