@@ -15,13 +15,20 @@ Install JDK 17 or newer and run these commands from the project folder:
 ./run.sh sample/login-events.csv 3 2
 ./run.sh sample/login-events.csv 3 1
 ./run.sh sample/login-events.csv 3 2 --json
+./run.sh sample/login-events.csv 3 2 --by-user --json
 ```
 
-The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes] [--json]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
+The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes] [--by-user] [--json]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
 
 ## How rolling windows work
 
 The analyzer groups failures by address and sorts each address's timestamps. It then finds the highest number of failures in any interval lasting at most the requested number of minutes. Both endpoints are included, so failures exactly two minutes apart count together in a 2-minute window. Input events may be out of timestamp order. Successes don't count as failures or reset earlier failures. The reported alert count is the highest count in one window, not the total across the file. The total, successful, and failed event counts still cover the entire file.
+
+## Optional per-user grouping
+
+Add `--by-user` after the numeric arguments to group failed logins by fictional username instead of address. It works with full-file counts and rolling windows. Run `./run.sh sample/login-events.csv 3 2 --by-user --json` to see `alex` with three failures. Put `--json` last. User-grouped JSON adds `"groupBy":"user"`; default address-based JSON stays unchanged.
+
+This mode combines failures for one username across addresses. It doesn't normalize usernames, identify a real person, or establish malicious activity. Use fictional records.
 
 ## JSON reports
 
@@ -70,7 +77,7 @@ Run the default sample, explain the result, then run the same sample with 2-minu
 ## Future improvements
 
 1. Measure memory use on larger synthetic files, especially rolling-window mode.
-2. Add per-user analysis without revealing personal information.
+2. Compare user and address grouping on larger fictional files.
 3. Consider a bounded-memory window approach when input timestamps are sorted.
 
 ## Sharing

@@ -15,20 +15,26 @@ public final class Main {
 
     static int run(String[] args, PrintStream out, PrintStream err) {
         boolean json = args.length > 0 && args[args.length - 1].equals("--json");
-        int valueCount = args.length - (json ? 1 : 0);
+        int withoutJson = args.length - (json ? 1 : 0);
+        boolean byUser = withoutJson > 0 && args[withoutJson - 1].equals("--by-user");
+        int valueCount = withoutJson - (byUser ? 1 : 0);
         if (valueCount < 1 || valueCount > 3) {
-            err.println("Usage: Main <events.csv> [failure-threshold] [window-minutes] [--json]");
+            err.println("Usage: Main <events.csv> [failure-threshold] [window-minutes] [--by-user] [--json]");
             return 2;
         }
         try {
             int threshold = valueCount >= 2 ? Integer.parseInt(args[1]) : 3;
             Integer windowMinutes = valueCount == 3 ? Integer.parseInt(args[2]) : null;
             var path = Path.of(args[0]);
-            var report = windowMinutes == null
-                    ? SecurityAnalyzer.analyzeFile(path, threshold)
-                    : SecurityAnalyzer.analyzeFile(path, threshold, Duration.ofMinutes(windowMinutes));
+            var report = byUser
+                    ? (windowMinutes == null
+                            ? SecurityAnalyzer.analyzeFileByUser(path, threshold)
+                            : SecurityAnalyzer.analyzeFileByUser(path, threshold, Duration.ofMinutes(windowMinutes)))
+                    : (windowMinutes == null
+                            ? SecurityAnalyzer.analyzeFile(path, threshold)
+                            : SecurityAnalyzer.analyzeFile(path, threshold, Duration.ofMinutes(windowMinutes)));
             if (json) {
-                out.println(toJson(report, threshold, windowMinutes));
+                out.println(toJson(report, threshold, windowMinutes, byUser));
                 return 0;
             }
             out.println("Security Log Explorer");
@@ -37,7 +43,7 @@ public final class Main {
             String scope = windowMinutes != null
                     ? "within any " + args[2] + "-minute window"
                     : "across this file";
-            out.println("Addresses with at least " + threshold + " failures " + scope + ":");
+            out.println((byUser ? "Users" : "Addresses") + " with at least " + threshold + " failures " + scope + ":");
             if (report.alerts().isEmpty()) out.println("None");
             report.alerts().forEach((address, count) -> out.println(printableAddress(address) + " : " + count + " failures"));
             out.println("Alerts are investigation leads, not proof of an attack.");
@@ -73,6 +79,10 @@ public final class Main {
 
     /** One-line JSON for tools that need to read the report. */
     static String toJson(SecurityAnalyzer.Report report, int threshold, Integer windowMinutes) {
+        return toJson(report, threshold, windowMinutes, false);
+    }
+
+    static String toJson(SecurityAnalyzer.Report report, int threshold, Integer windowMinutes, boolean byUser) {
         StringBuilder json = new StringBuilder();
         json.append("{\"total\":").append(report.total())
                 .append(",\"successful\":").append(report.successful())
@@ -80,6 +90,7 @@ public final class Main {
                 .append(",\"threshold\":").append(threshold)
                 .append(",\"windowMinutes\":");
         json.append(windowMinutes == null ? "null" : windowMinutes);
+        if (byUser) json.append(",\"groupBy\":\"user\"");
         json.append(",\"alerts\":{");
         boolean first = true;
         for (var alert : report.alerts().entrySet()) {

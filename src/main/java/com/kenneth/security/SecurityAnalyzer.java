@@ -21,7 +21,7 @@ public final class SecurityAnalyzer {
 
     /** Existing behavior: count failures across the entire input file. */
     public static Report analyze(List<LoginEvent> events, int threshold) {
-        return analyzeInternal(events, threshold, null);
+        return analyzeInternal(events, threshold, null, false);
     }
 
     /** Alert on the maximum number of failures in any inclusive rolling window. */
@@ -29,31 +29,52 @@ public final class SecurityAnalyzer {
         if (window == null || window.isZero() || window.isNegative()) {
             throw new IllegalArgumentException("Window must be a positive duration");
         }
-        return analyzeInternal(events, threshold, window);
+        return analyzeInternal(events, threshold, window, false);
     }
 
     /** Analyze a CSV file without building a list of all login events. */
     public static Report analyzeFile(Path path, int threshold) throws IOException {
-        return analyzeFileInternal(path, threshold, null);
+        return analyzeFileInternal(path, threshold, null, false);
     }
 
     public static Report analyzeFile(Path path, int threshold, Duration window) throws IOException {
         if (window == null || window.isZero() || window.isNegative()) {
             throw new IllegalArgumentException("Window must be a positive duration");
         }
-        return analyzeFileInternal(path, threshold, window);
+        return analyzeFileInternal(path, threshold, window, false);
     }
 
-    private static Report analyzeFileInternal(Path path, int threshold, Duration window) throws IOException {
+    /** Count failures by fictional username instead of network address. */
+    public static Report analyzeByUser(List<LoginEvent> events, int threshold) {
+        return analyzeInternal(events, threshold, null, true);
+    }
+
+    public static Report analyzeByUser(List<LoginEvent> events, int threshold, Duration window) {
+        if (window == null || window.isZero() || window.isNegative())
+            throw new IllegalArgumentException("Window must be a positive duration");
+        return analyzeInternal(events, threshold, window, true);
+    }
+
+    public static Report analyzeFileByUser(Path path, int threshold) throws IOException {
+        return analyzeFileInternal(path, threshold, null, true);
+    }
+
+    public static Report analyzeFileByUser(Path path, int threshold, Duration window) throws IOException {
+        if (window == null || window.isZero() || window.isNegative())
+            throw new IllegalArgumentException("Window must be a positive duration");
+        return analyzeFileInternal(path, threshold, window, true);
+    }
+
+    private static Report analyzeFileInternal(Path path, int threshold, Duration window, boolean byUser) throws IOException {
         if (threshold < 1) throw new IllegalArgumentException("Threshold must be at least 1");
-        Summary summary = new Summary(window);
+        Summary summary = new Summary(window, byUser);
         LogParser.forEach(path, summary::accept);
         return summary.report(threshold);
     }
 
-    private static Report analyzeInternal(List<LoginEvent> events, int threshold, Duration window) {
+    private static Report analyzeInternal(List<LoginEvent> events, int threshold, Duration window, boolean byUser) {
         if (threshold < 1) throw new IllegalArgumentException("Threshold must be at least 1");
-        Summary summary = new Summary(window);
+        Summary summary = new Summary(window, byUser);
         for (LoginEvent event : events) summary.accept(event);
         return summary.report(threshold);
     }
@@ -61,24 +82,28 @@ public final class SecurityAnalyzer {
     /** Full-file mode keeps counts; window mode keeps only failure timestamps. */
     private static final class Summary {
         private final Duration window;
+        private final boolean byUser;
         private final Map<String, Integer> counts = new TreeMap<>();
         private final Map<String, List<Instant>> timestamps = new TreeMap<>();
         private int total;
         private int successful;
 
-        private Summary(Duration window) {
+        private Summary(Duration window, boolean byUser) {
             this.window = window;
+            this.byUser = byUser;
         }
 
         private void accept(LoginEvent event) {
             total++;
             if (event.success()) {
                 successful++;
-            } else if (window == null) {
-                counts.merge(event.address(), 1, Integer::sum);
             } else {
-                timestamps.computeIfAbsent(event.address(), key -> new ArrayList<>())
-                        .add(event.timestamp());
+                String key = byUser ? event.user() : event.address();
+                if (window == null) {
+                    counts.merge(key, 1, Integer::sum);
+                } else {
+                    timestamps.computeIfAbsent(key, name -> new ArrayList<>()).add(event.timestamp());
+                }
             }
         }
 

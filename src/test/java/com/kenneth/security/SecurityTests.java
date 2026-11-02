@@ -278,6 +278,42 @@ public final class SecurityTests {
         } finally {
             Files.deleteIfExists(manyEvents);
         }
+        var mixedUsers = List.of(
+                new LoginEvent(Instant.parse("2026-10-25T12:00:00Z"), "sam", "192.0.2.1", false),
+                new LoginEvent(Instant.parse("2026-10-25T12:01:00Z"), "sam", "192.0.2.2", false),
+                new LoginEvent(Instant.parse("2026-10-25T12:02:00Z"), "alex", "192.0.2.1", false));
+        check(SecurityAnalyzer.analyzeByUser(mixedUsers, 2).alerts().equals(Map.of("sam", 2)),
+                "user grouping combines different addresses");
+        check(SecurityAnalyzer.analyze(mixedUsers, 2).alerts().equals(Map.of("192.0.2.1", 2)),
+                "default grouping remains address-based");
+        check(SecurityAnalyzer.analyzeByUser(mixedUsers, 2, Duration.ofMinutes(1))
+                .alerts().equals(Map.of("sam", 2)), "user window includes exact boundary");
+        check(SecurityAnalyzer.analyzeByUser(mixedUsers, 2, Duration.ofSeconds(30))
+                .alerts().isEmpty(), "short user window excludes distant failures");
+        check(SecurityAnalyzer.analyzeFileByUser(Path.of("sample/login-events.csv"), 3)
+                .equals(SecurityAnalyzer.analyzeByUser(sample, 3)),
+                "streamed user summary matches list analysis");
+        check(SecurityAnalyzer.analyzeFileByUser(Path.of("sample/login-events.csv"), 3, twoMinutes)
+                .equals(SecurityAnalyzer.analyzeByUser(sample, 3, twoMinutes)),
+                "streamed user window matches list analysis");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "--by-user"}, out, err) == 0
+                && outBytes.toString().contains("Users with at least 3 failures")
+                && outBytes.toString().contains("alex : 3 failures"),
+                "CLI user text report");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "3", "2", "--by-user", "--json"},
+                out, err) == 0 && outBytes.toString().contains("\"groupBy\":\"user\"")
+                && outBytes.toString().contains("\"alerts\":{\"alex\":3}"),
+                "CLI user rolling JSON report");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "--by-user", "--json"},
+                out, err) == 0 && outBytes.toString().contains("\"alerts\":{\"alex\":3}"),
+                "CLI user default threshold");
+        outBytes.reset(); errBytes.reset();
+        check(Main.run(new String[]{"sample/login-events.csv", "--json", "--by-user"},
+                out, err) == 2 && outBytes.size() == 0,
+                "reject flag after JSON");
         System.out.println("All " + passed + " checks passed.");
     }
 }
