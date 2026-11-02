@@ -314,6 +314,31 @@ public final class SecurityTests {
         check(Main.run(new String[]{"sample/login-events.csv", "--json", "--by-user"},
                 out, err) == 2 && outBytes.size() == 0,
                 "reject flag after JSON");
+        // Reverse-ordered fictional events exercise sorting without a second timestamp list.
+        Path largeWindowFile = Files.createTempFile("security-large-window-", ".csv");
+        try {
+            try (var writer = Files.newBufferedWriter(largeWindowFile)) {
+                writer.write(header);
+                Instant start = Instant.parse("2026-10-25T00:00:00Z");
+                for (int i = 49_999; i >= 0; i--) {
+                    writer.write(start.plusSeconds(i).toString());
+                    writer.write(",sam,192.0.2.10,FAILURE\n");
+                }
+            }
+            var largeAddressReport = SecurityAnalyzer.analyzeFile(
+                    largeWindowFile, 61, Duration.ofMinutes(1));
+            check(largeAddressReport.total() == 50_000
+                    && largeAddressReport.failed() == 50_000
+                    && largeAddressReport.alerts().equals(Map.of("192.0.2.10", 61)),
+                    "50000 reverse-ordered failures preserve inclusive address window");
+            var largeUserReport = SecurityAnalyzer.analyzeFileByUser(
+                    largeWindowFile, 61, Duration.ofMinutes(1));
+            check(largeUserReport.total() == 50_000
+                    && largeUserReport.alerts().equals(Map.of("sam", 61)),
+                    "50000 reverse-ordered failures preserve inclusive user window");
+        } finally {
+            Files.deleteIfExists(largeWindowFile);
+        }
         System.out.println("All " + passed + " checks passed.");
     }
 }
