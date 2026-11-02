@@ -82,6 +82,8 @@ Run `./test.sh` to compile with `javac --release 17` and run the dependency-free
 
 On November 1, [PR #20](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/20) changed rolling-window analysis to sort its private timestamp lists in place. Two new checks exercise 50,000 reverse-ordered fictional failures for address and username grouping. All **83 checks** passed twice on hosted Java 17, including one run with a 64 MB Java heap. The existing sample, rolling-window, JSON, quoted CSV and BOM workflow steps passed in [merged-main GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41382945615). The previous 81-check result is historical. See [VERIFICATION.md](VERIFICATION.md) for the checks and limits.
 
+On November 1, [PR #22](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/22) added optional chronological streaming windows. All **95 checks** passed in both the regular and 64 MB heap test runs on hosted Java 17. The sample CLI, JSON, quoted CSV and BOM workflow steps passed in [merged-main CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41388126648). The earlier 83-check result is historical. This is a workload-specific test, not a universal memory limit.
+
 This is hosted CI evidence. The updated code hasn't been tested on the owner's Mac or with real authentication logs, and live monitoring hasn't been verified.
 
 ## Portfolio demonstration

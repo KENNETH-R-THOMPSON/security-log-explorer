@@ -107,3 +107,14 @@ Rolling-window analysis now sorts its privately owned failure timestamp lists in
 - All 83 checks passed in both the normal test run and a separate Java invocation with a 64 MB heap. The new checks use 50,000 reverse-ordered fictional failures, verifying 61 failures in an inclusive 60-second window for both address and username grouping.
 - The existing full-file, rolling-window, JSON, quoted CSV and BOM workflow steps also passed. The previous 81-check result is historical.
 - The 64 MB limit applies to the Java heap for this specific workload. It isn't a measured peak-memory reduction, a total process-memory limit, or a guarantee for larger inputs. No owner Mac test, real log ingestion or live monitoring was verified.
+
+## November 1, 2026 (chronological streaming windows)
+
+The optional `--sorted` mode uses a sliding queue to process a fictional CSV already in nondecreasing timestamp order. It evicts expired failures as each event arrives, including successful events, and tracks maximum failure counts by address or username. Equal timestamps are valid; out-of-order rows are rejected. Existing unsorted analysis is unchanged.
+
+- Merged code and tests: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/22
+- Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41388054671
+- Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41388126648
+- All **95 checks passed** in both the normal run and a separate run with a 64 MB Java heap. Twelve new checks cover chronological equivalence, ordering rejection, equal timestamps, expired failures, address and user grouping, CLI JSON, and 50,000 ordered fictional failures.
+- The existing full-file, unsorted-window, quoted CSV, BOM and JSON workflow steps also passed. The earlier 83-check result is historical.
+- Memory use depends on the failures still inside the current window plus distinct grouping keys with recorded maxima. The 64 MB run is one hosted workload, not a measured peak-memory limit or a guarantee for other files. No owner Mac, real authentication logs or live monitoring were tested.
