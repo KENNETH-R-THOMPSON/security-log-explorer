@@ -118,3 +118,11 @@ The optional `--sorted` mode uses a sliding queue to process a fictional CSV alr
 - All **95 checks passed** in both the normal run and a separate run with a 64 MB Java heap. Twelve new checks cover chronological equivalence, ordering rejection, equal timestamps, expired failures, address and user grouping, CLI JSON, and 50,000 ordered fictional failures.
 - The existing full-file, unsorted-window, quoted CSV, BOM and JSON workflow steps also passed. The earlier 83-check result is historical.
 - Memory use depends on the failures still inside the current window plus distinct grouping keys with recorded maxima. The 64 MB run is one hosted workload, not a measured peak-memory limit or a guarantee for other files. No owner Mac, real authentication logs or live monitoring were tested.
+
+## November 2, 2026 (owner Mac validation)
+
+- Tested public main commit `22755cf15d2f1e57bec4e6b9d367949b4bcbf6c2` on macOS 26.6.2, arm64, using OpenJDK 25.0.2 and `javac --release 17`.
+- `./test.sh` passed all 95 checks with exit 0. This includes the synthetic 50,000-event workloads and chronological streaming tests.
+- `./run.sh sample/login-events.csv 3 2 --json` exited 0 and reported 6 events, 2 successes, 4 failures and one address alert of 3 failures for `192.0.2.10`.
+- Logs were saved locally under `~/Thompson-AI/portfolio-tests/`. No real authentication logs or credentials were used.
+- This verifies the current code on the owner's Mac with JDK 25. It doesn't establish execution with an installed JDK 17 on that Mac or live security monitoring. Earlier hosted Java 17 CI remains separate evidence.
