@@ -124,12 +124,12 @@ public final class SecurityAnalyzer {
     }
 
     private static int maxFailuresInWindow(List<Instant> timestamps, Duration window) {
-        List<Instant> ordered = new ArrayList<>(timestamps);
-        ordered.sort(Instant::compareTo);
+        // Summary owns this list, so sorting it here avoids a second list of references.
+        timestamps.sort(Instant::compareTo);
         int left = 0;
         int maximum = 0;
-        for (int right = 0; right < ordered.size(); right++) {
-            while (Duration.between(ordered.get(left), ordered.get(right)).compareTo(window) > 0) {
+        for (int right = 0; right < timestamps.size(); right++) {
+            while (Duration.between(timestamps.get(left), timestamps.get(right)).compareTo(window) > 0) {
                 left++;
             }
             maximum = Math.max(maximum, right - left + 1);
