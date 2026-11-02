@@ -66,7 +66,7 @@ CSV header: `timestamp,user,address,result` (an initial UTF-8 BOM is accepted). 
 
 Run `./test.sh` to compile with `javac --release 17` and run the dependency-free tests. They cover CSV parsing, full-file and rolling-window analysis, JSON reports, malformed input, and safe terminal output.
 
-On November 1, [PR #17](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/17) added two checks for unsafe characters in CLI errors. All **71 checks** passed on hosted Java 17, along with sample, rolling-window, JSON, quoted CSV and BOM examples in [GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41362100107). The previous 69-check result is historical. See [VERIFICATION.md](VERIFICATION.md) for earlier runs and their exact links.
+On November 1, [PR #18](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/18) added optional fictional username grouping with ten regression checks. All **81 checks** passed on hosted Java 17 in [merged-main GitHub Actions](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41377481814). Sample, rolling-window, JSON, quoted CSV and BOM examples also passed. The earlier 71-check result is historical. See [VERIFICATION.md](VERIFICATION.md) for exact evidence.
 
 This is hosted CI evidence. The updated code hasn't been tested on the owner's Mac or with real authentication logs, and live monitoring hasn't been verified.
 
