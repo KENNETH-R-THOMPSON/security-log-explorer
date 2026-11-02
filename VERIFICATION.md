@@ -86,3 +86,13 @@ Java number parsing errors can include the original user-supplied argument. CLI 
 - Hosted Java 17 push CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41362100107
 - All 71 automated checks passed. Two new checks exercise an ANSI escape and a bidirectional formatting character in an invalid threshold. Sample, rolling-window, JSON, quoted CSV and BOM workflow steps passed.
 - The earlier 69-check result is historical. This is hosted CI, not testing on the owner's Mac or with real authentication logs. No live security monitoring was verified.
+
+## November 1, 2026 (optional fictional username grouping)
+
+The CLI accepts `--by-user` after any numeric arguments and before `--json`. It groups failed events by exact username across addresses. Full-file and rolling-window analysis both support it. Existing address grouping and its JSON output remain unchanged. User-grouped JSON includes `"groupBy":"user"`.
+
+- Merged code and tests: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/18
+- Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41377427329
+- Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41377481814
+- All 81 checks passed, including ten new tests for cross-address user grouping, window boundaries, streamed analysis, CLI text and JSON output, and invalid flag order. The existing fictional sample, quoted CSV, BOM and JSON workflow checks also passed.
+- The earlier 71-check result is historical. Usernames aren't normalized, the tool doesn't establish identity or malicious activity, and no real logs, owner Mac run or live monitoring were tested.
