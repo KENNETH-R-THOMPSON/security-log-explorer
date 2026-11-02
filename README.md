@@ -84,7 +84,7 @@ On November 1, [PR #20](https://github.com/KENNETH-R-THOMPSON/security-log-explo
 
 On November 1, [PR #22](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/22) added optional chronological streaming windows. All **95 checks** passed in both the regular and 64 MB heap test runs on hosted Java 17. The sample CLI, JSON, quoted CSV and BOM workflow steps passed in [merged-main CI](https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41388126648). The earlier 83-check result is historical. This is a workload-specific test, not a universal memory limit.
 
-This is hosted CI evidence. The updated code hasn't been tested on the owner's Mac or with real authentication logs, and live monitoring hasn't been verified.
+On November 2, 2026, the current main source (`22755cf`) passed all 95 checks on the owner's Mac (macOS 26.6.2, arm64, OpenJDK 25.0.2, compiled with `javac --release 17`). The fictional sample JSON command returned exit 0 with 6 events, 4 failures and one address alert containing 3 failures. These local results are separate from hosted Java 17 CI. An installed Java 17 runtime on the Mac, real authentication logs and live monitoring remain unverified.
 
 ## Portfolio demonstration
 
