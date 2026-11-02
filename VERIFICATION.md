@@ -96,3 +96,14 @@ The CLI accepts `--by-user` after any numeric arguments and before `--json`. It 
 - Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41377481814
 - All 81 checks passed, including ten new tests for cross-address user grouping, window boundaries, streamed analysis, CLI text and JSON output, and invalid flag order. The existing fictional sample, quoted CSV, BOM and JSON workflow checks also passed.
 - The earlier 71-check result is historical. Usernames aren't normalized, the tool doesn't establish identity or malicious activity, and no real logs, owner Mac run or live monitoring were tested.
+
+## November 1, 2026 (rolling-window sorting and larger fictional input)
+
+Rolling-window analysis now sorts its privately owned failure timestamp lists in place. This avoids copying the complete list of timestamp references for each group before sorting. It still retains all failure timestamps and doesn't offer bounded-memory streaming.
+
+- Merged code, tests and CI change: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/pull/20
+- Hosted Java 17 PR CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41382889707
+- Hosted Java 17 merged-main CI: https://github.com/KENNETH-R-THOMPSON/security-log-explorer/actions/runs/41382945615
+- All 83 checks passed in both the normal test run and a separate Java invocation with a 64 MB heap. The new checks use 50,000 reverse-ordered fictional failures, verifying 61 failures in an inclusive 60-second window for both address and username grouping.
+- The existing full-file, rolling-window, JSON, quoted CSV and BOM workflow steps also passed. The previous 81-check result is historical.
+- The 64 MB limit applies to the Java heap for this specific workload. It isn't a measured peak-memory reduction, a total process-memory limit, or a guarantee for larger inputs. No owner Mac test, real log ingestion or live monitoring was verified.
