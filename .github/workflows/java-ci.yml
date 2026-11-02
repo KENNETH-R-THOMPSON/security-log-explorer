@@ -23,6 +23,9 @@ jobs:
       - name: Run automated checks
         run: sh ./test.sh
 
+      - name: Run regression checks with a 64 MB Java heap
+        run: java -Xmx64m -cp build/test-classes com.kenneth.security.SecurityTests
+
       - name: Run sample full-file report
         run: sh ./run.sh
 
