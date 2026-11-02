@@ -16,13 +16,27 @@ Install JDK 17 or newer and run these commands from the project folder:
 ./run.sh sample/login-events.csv 3 1
 ./run.sh sample/login-events.csv 3 2 --json
 ./run.sh sample/login-events.csv 3 2 --by-user --json
+./run.sh sample/login-events.csv 3 2 --sorted --by-user --json
 ```
 
-The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes] [--by-user] [--json]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
+The command format is `./run.sh <events.csv> [failure-threshold] [window-minutes] [--sorted] [--by-user] [--json]`. The default threshold is 3. Omit `window-minutes` to count all failures in the file. A positive integer `window-minutes` activates rolling-window detection; specify the threshold when specifying a window. For the sample, the 2-minute window flags `192.0.2.10` with 3 failures, while a 1-minute window with threshold 3 reports no alerts. Exit 0 means analysis completed, even when alerts exist. Exit 2 means invalid input or file access failure.
 
 ## How rolling windows work
 
 The analyzer groups failures by address and sorts each address's timestamps. It then finds the highest number of failures in any interval lasting at most the requested number of minutes. Both endpoints are included, so failures exactly two minutes apart count together in a 2-minute window. Input events may be out of timestamp order. Successes don't count as failures or reset earlier failures. The reported alert count is the highest count in one window, not the total across the file. The total, successful, and failed event counts still cover the entire file.
+
+## Chronological streaming mode
+
+For CSV files already sorted by timestamp, add `--sorted` after the required threshold and window. For example:
+
+```sh
+./run.sh sample/login-events.csv 3 2 --sorted
+./run.sh sample/login-events.csv 3 2 --sorted --by-user --json
+```
+
+This mode processes each row in order and removes failures that have left the current time window. It tracks the highest count seen for each address or username. The memory used for recent events depends on the number of failures within the current window, plus the number of grouping keys with recorded maxima. Equal timestamps are accepted. All rows, including successful logins, must be in nondecreasing timestamp order; an out-of-order row causes an error and exit code 2. The command never sorts or modifies the CSV. The JSON report includes `"sortedInput":true` when this mode is selected.
+
+The default rolling-window mode still accepts unsorted CSV files. It retains all failure timestamps until reporting. Chronological mode is useful for large fictional files with timestamps already in order, but a burst of many failures within one window can still require substantial memory.
 
 ## Optional per-user grouping
 
@@ -60,7 +74,7 @@ Start with [PRACTICE.md](PRACTICE.md). Source: `Main` handles CLI/reporting, `Lo
 
 ## Input and limitations
 
-CSV header: `timestamp,user,address,result` (an initial UTF-8 BOM is accepted). Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank or padded with whitespace. Single-line quoted CSV fields are supported, including commas and doubled double quotes (for example, `"sam, jr"` or `"sam ""junior"""`). Malformed quoting, extra columns and multiline fields are rejected with a physical line number. The address is an opaque grouping key, not a validated IP address. Text reports escape control characters and Unicode formatting characters in address labels using `\uXXXX` notation. Literal backslashes are doubled, so text that looks like an escaped control character stays distinguishable from a real control character. This prevents ambiguous alert labels and raw terminal escape sequences. JSON reports retain address values as data with JSON escaping; consumers must still handle untrusted strings safely. Blank lines are ignored. The command-line analyzer reads CSV events one at a time. Full-file mode keeps failure counts per selected grouping key. Rolling-window mode keeps failure timestamps per selected grouping key and sorts its private timestamp lists in place, avoiding an additional full list of references during reporting. The `LogParser.read` method still returns a list for callers that need one. The `LogParser.forEach` callback runs after CSV parsing succeeds; if a caller's callback throws, the original exception is preserved rather than reported as a malformed CSV row. Use synthetic practice datasets; large rolling-window inputs can still use substantial memory. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
+CSV header: `timestamp,user,address,result` (an initial UTF-8 BOM is accepted). Timestamps must parse as ISO instants; result is exactly SUCCESS or FAILURE. Fields cannot be blank or padded with whitespace. Single-line quoted CSV fields are supported, including commas and doubled double quotes (for example, `"sam, jr"` or `"sam ""junior"""`). Malformed quoting, extra columns and multiline fields are rejected with a physical line number. The address is an opaque grouping key, not a validated IP address. Text reports escape control characters and Unicode formatting characters in address labels using `\uXXXX` notation. Literal backslashes are doubled, so text that looks like an escaped control character stays distinguishable from a real control character. This prevents ambiguous alert labels and raw terminal escape sequences. JSON reports retain address values as data with JSON escaping; consumers must still handle untrusted strings safely. Blank lines are ignored. The command-line analyzer reads CSV events one at a time. Full-file mode keeps failure counts per selected grouping key. Default rolling-window mode keeps failure timestamps per selected grouping key and sorts its private timestamp lists in place, avoiding an additional full list of references during reporting. The opt-in chronological mode uses one sliding queue and checks that every input timestamp is in order. The `LogParser.read` method still returns a list for callers that need one. The `LogParser.forEach` callback runs after CSV parsing succeeds; if a caller's callback throws, the original exception is preserved rather than reported as a malformed CSV row. Use synthetic practice datasets; large rolling-window inputs can still use substantial memory. Alerts are investigation leads, not proof of an attack. Sample names and documentation-range IP addresses are synthetic. Don't publish real authentication logs.
 
 ## Tests and verification
 
@@ -78,7 +92,7 @@ Run the default sample, explain the result, then run the same sample with 2-minu
 
 1. Measure memory use on larger synthetic files, especially rolling-window mode.
 2. Compare user and address grouping on larger fictional files.
-3. Consider a bounded-memory window approach when input timestamps are sorted.
+3. Compare chronological mode and default rolling windows on larger fictional files, recording the workload and heap limits.
 
 ## Sharing
 
