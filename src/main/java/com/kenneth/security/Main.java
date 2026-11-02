@@ -17,24 +17,30 @@ public final class Main {
         boolean json = args.length > 0 && args[args.length - 1].equals("--json");
         int withoutJson = args.length - (json ? 1 : 0);
         boolean byUser = withoutJson > 0 && args[withoutJson - 1].equals("--by-user");
-        int valueCount = withoutJson - (byUser ? 1 : 0);
-        if (valueCount < 1 || valueCount > 3) {
-            err.println("Usage: Main <events.csv> [failure-threshold] [window-minutes] [--by-user] [--json]");
+        int withoutUser = withoutJson - (byUser ? 1 : 0);
+        boolean sorted = withoutUser > 0 && args[withoutUser - 1].equals("--sorted");
+        int valueCount = withoutUser - (sorted ? 1 : 0);
+        if (valueCount < 1 || valueCount > 3 || (sorted && valueCount != 3)) {
+            err.println("Usage: Main <events.csv> [failure-threshold] [window-minutes] [--sorted] [--by-user] [--json]");
             return 2;
         }
         try {
             int threshold = valueCount >= 2 ? Integer.parseInt(args[1]) : 3;
             Integer windowMinutes = valueCount == 3 ? Integer.parseInt(args[2]) : null;
             var path = Path.of(args[0]);
-            var report = byUser
-                    ? (windowMinutes == null
-                            ? SecurityAnalyzer.analyzeFileByUser(path, threshold)
-                            : SecurityAnalyzer.analyzeFileByUser(path, threshold, Duration.ofMinutes(windowMinutes)))
-                    : (windowMinutes == null
-                            ? SecurityAnalyzer.analyzeFile(path, threshold)
-                            : SecurityAnalyzer.analyzeFile(path, threshold, Duration.ofMinutes(windowMinutes)));
+            var report = sorted
+                    ? (byUser
+                            ? SecurityAnalyzer.analyzeSortedFileByUser(path, threshold, Duration.ofMinutes(windowMinutes))
+                            : SecurityAnalyzer.analyzeSortedFile(path, threshold, Duration.ofMinutes(windowMinutes)))
+                    : byUser
+                            ? (windowMinutes == null
+                                    ? SecurityAnalyzer.analyzeFileByUser(path, threshold)
+                                    : SecurityAnalyzer.analyzeFileByUser(path, threshold, Duration.ofMinutes(windowMinutes)))
+                            : (windowMinutes == null
+                                    ? SecurityAnalyzer.analyzeFile(path, threshold)
+                                    : SecurityAnalyzer.analyzeFile(path, threshold, Duration.ofMinutes(windowMinutes)));
             if (json) {
-                out.println(toJson(report, threshold, windowMinutes, byUser));
+                out.println(toJson(report, threshold, windowMinutes, byUser, sorted));
                 return 0;
             }
             out.println("Security Log Explorer");
@@ -79,10 +85,15 @@ public final class Main {
 
     /** One-line JSON for tools that need to read the report. */
     static String toJson(SecurityAnalyzer.Report report, int threshold, Integer windowMinutes) {
-        return toJson(report, threshold, windowMinutes, false);
+        return toJson(report, threshold, windowMinutes, false, false);
     }
 
     static String toJson(SecurityAnalyzer.Report report, int threshold, Integer windowMinutes, boolean byUser) {
+        return toJson(report, threshold, windowMinutes, byUser, false);
+    }
+
+    static String toJson(SecurityAnalyzer.Report report, int threshold, Integer windowMinutes,
+                         boolean byUser, boolean sorted) {
         StringBuilder json = new StringBuilder();
         json.append("{\"total\":").append(report.total())
                 .append(",\"successful\":").append(report.successful())
@@ -91,6 +102,7 @@ public final class Main {
                 .append(",\"windowMinutes\":");
         json.append(windowMinutes == null ? "null" : windowMinutes);
         if (byUser) json.append(",\"groupBy\":\"user\"");
+        if (sorted) json.append(",\"sortedInput\":true");
         json.append(",\"alerts\":{");
         boolean first = true;
         for (var alert : report.alerts().entrySet()) {
